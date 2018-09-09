@@ -1,0 +1,6 @@
+# created for combat 
+# should have 5ft by 5ft grid (zoom-able)
+# should have images for players and maybe monsters
+# should be able to verify distances
+# should have commands special to DM and commands for players only
+# 
