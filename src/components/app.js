@@ -1,11 +1,11 @@
 import React from "react";
+import GridLayout from "./gridLayout";
+
 import "../assets/css/app.css";
 
 const App = () => (
-  <div>
-    <div className="app">
-      <h1>Welcome</h1>
-    </div>
+  <div className="app-container">
+    <GridLayout />
   </div>
 );
 
