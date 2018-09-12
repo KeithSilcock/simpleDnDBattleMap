@@ -1,3 +1,11 @@
 .idea
 .DS_Store
 node_modules
+
+config/
+/config
+/config/
+/config/index.js
+config/index.js
+src/config
+/src
