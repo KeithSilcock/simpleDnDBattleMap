@@ -16,9 +16,9 @@
   },
   "dependencies": {
     "babel-polyfill": "^6.26.0",
+    "firebase": "^5.4.2",
     "react": "^16.4.0",
     "react-dom": "^16.4.0",
-    "react-firebase": "^2.2.8",
     "react-redux": "^5.0.7",
     "redux": "^4.0.0"
   },

@@ -1,4 +1,5 @@
 import React from "react";
+import firebase from "../firebase";
 
 import "../assets/css/gridLayout.css";
 
@@ -20,6 +21,12 @@ class GridLayout extends React.Component {
       ...this.state,
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight
+    });
+
+    const path = `/entities_on_map/`;
+    firebase.ref(path).on("value", snapshot => {
+      const activeDisplay = snapshot.val();
+      debugger;
     });
   }
 
