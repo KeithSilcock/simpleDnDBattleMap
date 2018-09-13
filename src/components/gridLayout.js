@@ -1,5 +1,7 @@
 import React from "react";
-import firebase from "../firebase";
+import firebaseApp from "../firebase";
+import EntityStatusBar from "./entityStatusBar";
+import EntityImage from "./entityImage";
 
 import "../assets/css/gridLayout.css";
 
@@ -17,6 +19,10 @@ class GridLayout extends React.Component {
 
     this.initialGridUnitSize = 50;
     this.distancePerBlock = 5;
+    this.baseRef = null;
+    this.entRef = null;
+    this.db = firebaseApp.database();
+    this.storage = firebaseApp.storage();
   }
 
   componentDidMount() {
@@ -28,22 +34,72 @@ class GridLayout extends React.Component {
 
     //pulling initial data for reference
     const BASE_PATH = `/`;
-    firebase.ref(BASE_PATH).on("value", snapshot => {
+    this.baseRef = this.db.ref(BASE_PATH).once("value", snapshot => {
       const data = snapshot.val();
+
       this.setState({
         ...this.state,
-        data,
-        entityList: data.entities_on_map
+        data
       });
+
+      //get images
+      for (
+        let entityIndex = 0;
+        entityIndex < Object.keys(data.entities_on_map).length;
+        entityIndex++
+      ) {
+        const entityHash = Object.keys(data.entities_on_map)[entityIndex];
+        const entity = data.entities_on_map[entityHash];
+
+        if (entity.is_player) {
+          const entityTypePath = `/${entity.base_hash}/${
+            data.players[entity.base_hash].char_name
+          }.png`;
+
+          const imageURL = this.storage
+            .ref(`/players`)
+            .child(`${entityTypePath}`)
+            .getDownloadURL()
+            .then(url => {
+              const { data } = this.state;
+
+              const updatedData = {
+                ...data,
+                players: {
+                  ...data.players,
+                  [entity.base_hash]: {
+                    ...data.players[entity.base_hash],
+                    image: url
+                  }
+                }
+              };
+
+              this.setState({
+                ...this.state,
+                data: updatedData
+              });
+            });
+        }
+      }
     });
 
     //setting firebase to update entities on change
     const ENTITY_PATH = "/entities_on_map";
-    firebase.ref(ENTITY_PATH).on("child_changed", snapshot => {
-      const newEntityList = snapshot.val();
-      debugger;
+    this.entRef = this.db.ref(ENTITY_PATH).on("value", snapshot => {
+      const entityList = snapshot.val();
+      this.setState({
+        ...this.state,
+        entityList
+      });
     });
   }
+
+  // componentWillUnmount() {
+  //   debugger;
+  //   if (this.baseRef) this.baseRef.off();
+
+  //   if (this.entRef) this.entRef.off();
+  // }
 
   render() {
     const {
@@ -70,36 +126,51 @@ class GridLayout extends React.Component {
     );
 
     //create entity list
-    const entities = entityList
-      ? Object.keys(entityList).map((entityIndex, index) => {
-          const entity = entityList[entityIndex];
+    const entities =
+      entityList && data
+        ? Object.keys(entityList).map((entityIndex, index) => {
+            const entity = entityList[entityIndex];
+            const entityType = entity.is_player
+              ? "players"
+              : "monster_list_base";
 
-          const entityType = entity.is_player ? "players" : "monster_list_base";
-          const posX = (entity.pos_x / this.distancePerBlock) * currentScale;
-          const posY = (entity.pos_y / this.distancePerBlock) * currentScale;
+            const baseEntity = data[entityType][entity.base_hash];
+            const posX = (entity.pos_x / this.distancePerBlock) * currentScale;
+            const posY = (entity.pos_y / this.distancePerBlock) * currentScale;
 
-          const mapPlacement = {
-            gridColumn: `${posX}`,
-            gridRow: `${posY}`
-          };
+            const mapPlacement = {
+              gridColumn: `${posX}`,
+              gridRow: `${posY}`
+            };
+            const removeWhiteBackground = entity.is_player
+              ? {}
+              : {
+                  mixBlendMode: "multiply"
+                };
 
-          return (
-            <div
-              style={mapPlacement}
-              col={posX}
-              row={posY}
-              key={index}
-              className="entity"
-            >
-              <span>
-                HP: {entity.current_hp} /{" "}
-                {data[entityType][entity.base_hash].total_hp}
-              </span>
-              <div className="base" />
-            </div>
-          );
-        })
-      : null;
+            const style = Object.assign({}, mapPlacement);
+
+            return (
+              <div
+                style={style}
+                col={posX}
+                row={posY}
+                key={index}
+                className="entity"
+              >
+                {/* <EntityImage entity={entity} baseEntity={baseEntity} /> */}
+                <img
+                  style={removeWhiteBackground}
+                  className={`entity-image`}
+                  src={`${baseEntity.image}`}
+                  alt=""
+                />
+                <EntityStatusBar entity={entity} baseEntity={baseEntity} />
+                <div className="base" />
+              </div>
+            );
+          })
+        : null;
 
     //create grid array
     const gridArray = [];
@@ -108,6 +179,7 @@ class GridLayout extends React.Component {
         //add each item
         gridArray.push(
           <div
+            key={`${columnIndex} ${rowIndex}`}
             className={`tile`}
             col={columnIndex}
             row={rowIndex}
