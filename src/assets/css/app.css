@@ -6,3 +6,16 @@ body {
   height: 100vh;
   width: 100vw;
 }
+.entity {
+  position: relative;
+}
+.entity .base {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: blue;
+  right: 0;
+  bottom: 0;
+  transform: translate(50%, 50%);
+}
