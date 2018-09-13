@@ -1,4 +1,7 @@
 import React from "react";
+import firebaseApp from "../firebase";
+import EntityStatusBar from "./entityStatusBar";
+import EntityImage from "./entityImage";
 
 import "../assets/css/gridLayout.css";
 
@@ -9,10 +12,17 @@ class GridLayout extends React.Component {
     this.state = {
       currentScale: 1,
       windowWidth: null,
-      windowHeight: null
+      windowHeight: null,
+      data: null,
+      entityList: null
     };
 
     this.initialGridUnitSize = 50;
+    this.distancePerBlock = 5;
+    this.baseRef = null;
+    this.entRef = null;
+    this.db = firebaseApp.database();
+    this.storage = firebaseApp.storage();
   }
 
   componentDidMount() {
@@ -21,10 +31,84 @@ class GridLayout extends React.Component {
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight
     });
+
+    //pulling initial data for reference
+    const BASE_PATH = `/`;
+    this.baseRef = this.db.ref(BASE_PATH).once("value", snapshot => {
+      const data = snapshot.val();
+
+      this.setState({
+        ...this.state,
+        data
+      });
+
+      //get images
+      for (
+        let entityIndex = 0;
+        entityIndex < Object.keys(data.entities_on_map).length;
+        entityIndex++
+      ) {
+        const entityHash = Object.keys(data.entities_on_map)[entityIndex];
+        const entity = data.entities_on_map[entityHash];
+
+        if (entity.is_player) {
+          const entityTypePath = `/${entity.base_hash}/${
+            data.players[entity.base_hash].char_name
+          }.png`;
+
+          const imageURL = this.storage
+            .ref(`/players`)
+            .child(`${entityTypePath}`)
+            .getDownloadURL()
+            .then(url => {
+              const { data } = this.state;
+
+              const updatedData = {
+                ...data,
+                players: {
+                  ...data.players,
+                  [entity.base_hash]: {
+                    ...data.players[entity.base_hash],
+                    image: url
+                  }
+                }
+              };
+
+              this.setState({
+                ...this.state,
+                data: updatedData
+              });
+            });
+        }
+      }
+    });
+
+    //setting firebase to update entities on change
+    const ENTITY_PATH = "/entities_on_map";
+    this.entRef = this.db.ref(ENTITY_PATH).on("value", snapshot => {
+      const entityList = snapshot.val();
+      this.setState({
+        ...this.state,
+        entityList
+      });
+    });
   }
 
+  // componentWillUnmount() {
+  //   debugger;
+  //   if (this.baseRef) this.baseRef.off();
+
+  //   if (this.entRef) this.entRef.off();
+  // }
+
   render() {
-    const { currentScale, windowHeight, windowWidth } = this.state;
+    const {
+      currentScale,
+      windowHeight,
+      windowWidth,
+      data,
+      entityList
+    } = this.state;
 
     const numOfColumns = Math.floor(
       (windowWidth / this.initialGridUnitSize) * currentScale
@@ -41,12 +125,61 @@ class GridLayout extends React.Component {
         this.initialGridUnitSize
     );
 
+    //create entity list
+    const entities =
+      entityList && data
+        ? Object.keys(entityList).map((entityIndex, index) => {
+            const entity = entityList[entityIndex];
+            const entityType = entity.is_player
+              ? "players"
+              : "monster_list_base";
+
+            const baseEntity = data[entityType][entity.base_hash];
+            const posX = (entity.pos_x / this.distancePerBlock) * currentScale;
+            const posY = (entity.pos_y / this.distancePerBlock) * currentScale;
+
+            const mapPlacement = {
+              gridColumn: `${posX}`,
+              gridRow: `${posY}`
+            };
+            const removeWhiteBackground = entity.is_player
+              ? {}
+              : {
+                  mixBlendMode: "multiply"
+                };
+
+            const style = Object.assign({}, mapPlacement);
+
+            return (
+              <div
+                style={style}
+                col={posX}
+                row={posY}
+                key={index}
+                className="entity"
+              >
+                {/* <EntityImage entity={entity} baseEntity={baseEntity} /> */}
+                <img
+                  style={removeWhiteBackground}
+                  className={`entity-image`}
+                  src={`${baseEntity.image}`}
+                  alt=""
+                />
+                <EntityStatusBar entity={entity} baseEntity={baseEntity} />
+                <div className="base" />
+              </div>
+            );
+          })
+        : null;
+
+    //create grid array
     const gridArray = [];
     for (let rowIndex = 0; rowIndex < numOfRows; rowIndex++) {
       for (let columnIndex = 0; columnIndex < numOfColumns; columnIndex++) {
         //add each item
         gridArray.push(
           <div
+            key={`${columnIndex} ${rowIndex}`}
             className={`tile`}
             col={columnIndex}
             row={rowIndex}
@@ -55,15 +188,26 @@ class GridLayout extends React.Component {
       }
     }
 
-    const meStyle = {
-      gridColumn: "5",
-      gridRow: "1"
-    };
-    const me = (
-      <div style={meStyle} className="me">
-        keith
-      </div>
-    );
+    //splice out all created grid divs for entities
+    if (entities && entities.length) {
+      for (let entityIndex = 0; entityIndex < entities.length; entityIndex++) {
+        const entity = entities[entityIndex];
+
+        const entity_pos =
+          (numOfColumns - 1) * (entity.props.row - 1) + entity.props.col;
+        const removedEmptyDiv = gridArray.splice(entity_pos, 1);
+      }
+    }
+
+    // const meStyle = {
+    //   gridColumn: "5",
+    //   gridRow: "1"
+    // };
+    // const me = (
+    //   <div style={meStyle} className="me">
+    //     keith
+    //   </div>
+    // );
 
     const gridContainerLayout = {
       gridTemplateColumns: `repeat(${numOfColumns}, ${this.initialGridUnitSize *
@@ -76,6 +220,7 @@ class GridLayout extends React.Component {
     return (
       <div style={gridContainerLayout} className="grid-container">
         {gridArray}
+        {entities}
         {/* {me} */}
       </div>
     );
