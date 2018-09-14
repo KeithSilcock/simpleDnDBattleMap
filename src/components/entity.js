@@ -19,7 +19,7 @@ class Entity extends React.Component {
     this.entityLocations = [];
   }
   startDragging(e) {
-    const { data, entity } = this.props;
+    const { entityList, entity } = this.props;
     const bounds =
       e.target.className === "entity"
         ? e.target.getBoundingClientRect()
@@ -30,8 +30,8 @@ class Entity extends React.Component {
       (e.clientX - bounds.left + this.props.initialGridUnitSize);
     this.yOffset = bounds.bottom - e.clientY;
 
-    for (let entityHash in data.entities_on_map) {
-      const entityOnMap = data.entities_on_map[entityHash];
+    for (let entityHash in entityList) {
+      const entityOnMap = entityList[entityHash];
 
       if (entityOnMap.base_hash !== entity.base_hash) {
         this.entityLocations.push({
@@ -92,6 +92,7 @@ class Entity extends React.Component {
     ) {
       const entLoc = this.entityLocations[entLocIndex];
       if (entLoc.x === this.prevPos.x && entLoc.y === this.prevPos.y) {
+        debugger;
         db.ref(`entities_on_map/${entityHash}`).update({
           ...entity,
           pos_x: this.nextPrevPos.x,
@@ -102,6 +103,7 @@ class Entity extends React.Component {
         return;
       }
     }
+    this.entityLocations = [];
   }
 
   render() {
