@@ -16,8 +16,14 @@ class Entity extends React.Component {
     this.lastYPos = 0;
   }
   startDragging(e) {
-    const bounds = e.target.getBoundingClientRect();
-    this.xOffset = bounds.width / 2 - (e.clientX - bounds.left);
+    const bounds =
+      e.target.className === "entity"
+        ? e.target.getBoundingClientRect()
+        : e.target.parentElement.getBoundingClientRect();
+
+    this.xOffset =
+      bounds.width / 2 -
+      (e.clientX - bounds.left + this.props.initialGridUnitSize);
     this.yOffset = bounds.bottom - e.clientY;
   }
 
@@ -49,7 +55,6 @@ class Entity extends React.Component {
         pos_y: newYPos * distancePerBlock
       });
     }
-
     // console.log(newXPos, newYPos);
   }
 
@@ -64,13 +69,13 @@ class Entity extends React.Component {
     return (
       <div
         className="entity"
-        draggable
-        onDragStart={e => {
-          this.startDragging(e);
-        }}
-        onDrag={e => {
-          this.dragging(e);
-        }}
+        // draggable
+        // onDragStart={e => {
+        //   this.startDragging(e);
+        // }}
+        // onDrag={e => {
+        //   this.dragging(e);
+        // }}
         // onDragEnd={e => {
         //   this.lastXPos;
         //   this.lastYPos;
@@ -80,12 +85,30 @@ class Entity extends React.Component {
         // }}
       >
         <img
+          draggable
+          onDragStart={e => {
+            this.startDragging(e);
+          }}
+          onDrag={e => {
+            this.dragging(e);
+          }}
           style={removeWhiteBackground}
           className={`entity-image`}
           src={`${baseEntity.image}`}
           alt=""
         />
-        <EntityStatusBar entity={entity} baseEntity={baseEntity} />
+        <div
+          className="holder"
+          draggable
+          onDragStart={e => {
+            this.startDragging(e);
+          }}
+          onDrag={e => {
+            this.dragging(e);
+          }}
+        >
+          <EntityStatusBar entity={entity} baseEntity={baseEntity} />
+        </div>
         <div className="base" />
       </div>
     );

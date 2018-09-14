@@ -4,6 +4,8 @@
 }
 .entity {
   cursor: pointer;
+  height: 50px;
+  width: 200px;
 }
 .entity-image {
   width: 200px;

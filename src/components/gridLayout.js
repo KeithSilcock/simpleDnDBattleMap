@@ -119,15 +119,19 @@ class GridLayout extends React.Component {
       (windowWidth / this.initialGridUnitSize) * currentScale
     );
     const xMargin = Math.round(
-      ((windowWidth / this.initialGridUnitSize) * currentScale - numOfColumns) *
-        this.initialGridUnitSize
+      (((windowWidth / this.initialGridUnitSize) * currentScale -
+        (numOfColumns - 1)) *
+        this.initialGridUnitSize) /
+        2
     );
     const numOfRows = Math.floor(
       (windowHeight / this.initialGridUnitSize) * currentScale
     );
     const yMargin = Math.round(
-      ((windowHeight / this.initialGridUnitSize) * currentScale - numOfRows) *
-        this.initialGridUnitSize
+      (((windowHeight / this.initialGridUnitSize) * currentScale -
+        (numOfRows - 1)) *
+        this.initialGridUnitSize) /
+        2
     );
 
     //create entity list
