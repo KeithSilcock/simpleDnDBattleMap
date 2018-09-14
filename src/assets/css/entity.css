@@ -1,0 +1,26 @@
+.entity-tile {
+  position: relative;
+  background-size: unset;
+}
+.entity {
+  cursor: pointer;
+  height: 50px;
+  width: 200px;
+}
+.entity-image {
+  width: 200px;
+  position: absolute;
+  left: -50%;
+  bottom: 0;
+  /* mix-blend-mode: multiply; */
+}
+.entity .base {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: blue;
+  right: 0;
+  bottom: 0;
+  transform: translate(50%, 50%);
+}

@@ -7,8 +7,9 @@
 .tile {
   border-top: 1px solid black;
   border-right: 1px solid black;
+  box-sizing: border-box;
 }
-[col="0"] {
+[col="1"] {
   border-left: 1px solid black;
 }
 [row="18"] {
