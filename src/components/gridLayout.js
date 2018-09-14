@@ -164,6 +164,7 @@ class GridLayout extends React.Component {
                 entityname={baseEntity.name || baseEntity.char_name}
               >
                 <Entity
+                  data={data}
                   entityHash={entityHash}
                   distancePerBlock={this.distancePerBlock}
                   db={this.db}
