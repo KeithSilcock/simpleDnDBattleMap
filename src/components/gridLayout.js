@@ -164,7 +164,7 @@ class GridLayout extends React.Component {
                 entityname={baseEntity.name || baseEntity.char_name}
               >
                 <Entity
-                  data={data}
+                  entityList={entityList}
                   entityHash={entityHash}
                   distancePerBlock={this.distancePerBlock}
                   db={this.db}
@@ -173,7 +173,7 @@ class GridLayout extends React.Component {
                   entity={entity}
                   baseEntity={baseEntity}
                 />
-                {`(${posX}, ${posY})`}
+                {`(${posX * 5}, ${posY * 5})`}
               </div>
             );
           })
@@ -190,7 +190,7 @@ class GridLayout extends React.Component {
             className={`tile`}
             col={columnIndex}
             row={rowIndex}
-          >{`(${columnIndex}, ${rowIndex})`}</div>
+          >{`(${columnIndex * 5}, ${rowIndex * 5})`}</div>
         );
       }
     }
