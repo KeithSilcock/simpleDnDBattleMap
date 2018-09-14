@@ -1,7 +1,7 @@
 import React from "react";
 import firebaseApp from "../firebase";
-import EntityStatusBar from "./entityStatusBar";
 import EntityImage from "./entityImage";
+import Entity from "./entity";
 
 import "../assets/css/gridLayout.css";
 
@@ -94,6 +94,11 @@ class GridLayout extends React.Component {
     });
   }
 
+  entityDraggedOver(e) {
+    //used to fix draggable items from jumping to 0,0
+    e.preventDefault();
+  }
+
   // componentWillUnmount() {
   //   debugger;
   //   if (this.baseRef) this.baseRef.off();
@@ -128,8 +133,8 @@ class GridLayout extends React.Component {
     //create entity list
     const entities =
       entityList && data
-        ? Object.keys(entityList).map((entityIndex, index) => {
-            const entity = entityList[entityIndex];
+        ? Object.keys(entityList).map((entityHash, index) => {
+            const entity = entityList[entityHash];
             const entityType = entity.is_player
               ? "players"
               : "monster_list_base";
@@ -142,31 +147,28 @@ class GridLayout extends React.Component {
               gridColumn: `${posX}`,
               gridRow: `${posY}`
             };
-            const removeWhiteBackground = entity.is_player
-              ? {}
-              : {
-                  mixBlendMode: "multiply"
-                };
 
             const style = Object.assign({}, mapPlacement);
 
             return (
               <div
+                className="entity-tile"
                 style={style}
                 col={posX}
                 row={posY}
                 key={index}
-                className="entity"
+                entityname={baseEntity.name || baseEntity.char_name}
               >
-                {/* <EntityImage entity={entity} baseEntity={baseEntity} /> */}
-                <img
-                  style={removeWhiteBackground}
-                  className={`entity-image`}
-                  src={`${baseEntity.image}`}
-                  alt=""
+                <Entity
+                  entityHash={entityHash}
+                  distancePerBlock={this.distancePerBlock}
+                  db={this.db}
+                  initialGridUnitSize={this.initialGridUnitSize}
+                  screen={{ x: windowWidth, y: windowHeight, xMargin, yMargin }}
+                  entity={entity}
+                  baseEntity={baseEntity}
                 />
-                <EntityStatusBar entity={entity} baseEntity={baseEntity} />
-                <div className="base" />
+                {`(${posX}, ${posY})`}
               </div>
             );
           })
@@ -174,8 +176,8 @@ class GridLayout extends React.Component {
 
     //create grid array
     const gridArray = [];
-    for (let rowIndex = 0; rowIndex < numOfRows; rowIndex++) {
-      for (let columnIndex = 0; columnIndex < numOfColumns; columnIndex++) {
+    for (let rowIndex = 1; rowIndex < numOfRows; rowIndex++) {
+      for (let columnIndex = 1; columnIndex < numOfColumns; columnIndex++) {
         //add each item
         gridArray.push(
           <div
@@ -190,35 +192,50 @@ class GridLayout extends React.Component {
 
     //splice out all created grid divs for entities
     if (entities && entities.length) {
-      for (let entityIndex = 0; entityIndex < entities.length; entityIndex++) {
-        const entity = entities[entityIndex];
+      //sort entities based on placement on map
+      const sortedEntities = entities.sort((a, b) => {
+        const aCrit = a.props.row * numOfColumns - 1 + a.props.col;
+        const bCrit = b.props.row * numOfColumns - 1 + b.props.col;
+        if (aCrit < bCrit) {
+          return -1;
+        } else if (bCrit < aCrit) {
+          return 1;
+        }
+        return 0;
+      });
+
+      for (
+        let entityIndex = 0;
+        entityIndex < sortedEntities.length;
+        entityIndex++
+      ) {
+        const entity = sortedEntities[entityIndex];
 
         const entity_pos =
-          (numOfColumns - 1) * (entity.props.row - 1) + entity.props.col;
+          (numOfColumns - 1) * (entity.props.row - 1) +
+          entity.props.col -
+          entityIndex -
+          1;
         const removedEmptyDiv = gridArray.splice(entity_pos, 1);
       }
     }
 
-    // const meStyle = {
-    //   gridColumn: "5",
-    //   gridRow: "1"
-    // };
-    // const me = (
-    //   <div style={meStyle} className="me">
-    //     keith
-    //   </div>
-    // );
-
     const gridContainerLayout = {
-      gridTemplateColumns: `repeat(${numOfColumns}, ${this.initialGridUnitSize *
+      gridTemplateColumns: `repeat(${numOfColumns - 1}, ${this
+        .initialGridUnitSize * currentScale}px)`,
+      gridTemplateRows: `repeat(${numOfRows - 1}, ${this.initialGridUnitSize *
         currentScale}px)`,
-      gridTemplateRows: `repeat(${numOfRows}, ${this.initialGridUnitSize *
-        currentScale}px)`,
-      margin: `${yMargin / 2}px ${xMargin / 2}px`
+      margin: `${yMargin}px ${xMargin}px`
     };
 
     return (
-      <div style={gridContainerLayout} className="grid-container">
+      <div
+        style={gridContainerLayout}
+        onDragOver={e => {
+          this.entityDraggedOver(e);
+        }}
+        className="grid-container"
+      >
         {gridArray}
         {entities}
         {/* {me} */}
