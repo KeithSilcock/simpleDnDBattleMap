@@ -8,10 +8,11 @@
   width: 200px;
 }
 .entity-image {
-  width: 200px;
+  width: 100px;
   position: absolute;
-  left: -50%;
+  /* left: -50%; */
   bottom: 0;
+
   /* mix-blend-mode: multiply; */
 }
 .entity .base {

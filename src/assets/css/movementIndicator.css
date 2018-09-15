@@ -1,0 +1,26 @@
+.movementIndicator {
+  position: absolute;
+
+  /* left: 100%; */
+  /* top: 100%; */
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+  box-sizing: border-box;
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* initial circle */
+.movementIndicator.movement-circle {
+  background-color: rgb(0, 187, 0);
+  background-color: rgba(0, 187, 0, 0.4);
+  border: 3px solid rgb(0, 139, 0);
+}
+
+/* dash circle */
+.movementIndicator.dash-circle {
+  background-color: rgb(0, 187, 0);
+  background-color: rgba(251, 255, 0, 0.4);
+  border: 3px solid rgb(211, 155, 0);
+}
