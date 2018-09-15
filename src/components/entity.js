@@ -85,13 +85,6 @@ class Entity extends React.Component {
             pos_x: newXPos,
             pos_y: newYPos
           });
-
-          // debugger;
-          // // db.ref(`entities_on_map/${entityHash}`).update({
-          // //   ...entity,
-          // //   pos_x: this.nextPrevPos.x,
-          // //   pos_y: this.nextPrevPos.y
-          // // });
         } else {
           //dont let them get there
           db.ref(`entities_on_map/${entityHash}`).update({
@@ -107,27 +100,8 @@ class Entity extends React.Component {
     console.log(newXPos, newYPos);
   }
 
-  checkOverlap(e) {
+  endDrag(e) {
     this.entityLocations = [];
-
-    // const { db, entity, entityHash } = this.props;
-    // //loop through entites on map and verify there aren't any positions that match this one
-    // for (
-    //   let entLocIndex = 0;
-    //   entLocIndex < this.entityLocations.length;
-    //   entLocIndex++
-    // ) {
-    //   const entLoc = this.entityLocations[entLocIndex];
-    //   if (entLoc.x === this.prevPos.x && entLoc.y === this.prevPos.y) {
-    //     debugger;
-    //     db.ref(`entities_on_map/${entityHash}`).update({
-    //       ...entity,
-    //       pos_x: this.nextPrevPos.x,
-    //       pos_y: this.nextPrevPos.y
-    //     });
-    //   }
-    // }
-    // this.entityLocations = [];
   }
 
   render() {
@@ -160,7 +134,7 @@ class Entity extends React.Component {
             this.dragging(e);
           }}
           onDragEnd={e => {
-            this.checkOverlap(e);
+            this.endDrag(e);
             clearSelectedEntity(e);
           }}
           className={`entity-image`}
@@ -178,7 +152,7 @@ class Entity extends React.Component {
             this.dragging(e);
           }}
           onDragEnd={e => {
-            this.checkOverlap(e);
+            this.endDrag(e);
             clearSelectedEntity(e);
           }}
         >
