@@ -1,8 +1,6 @@
 import React from "react";
 import EntityStatusBar from "./entityStatusBar";
 
-import firebaseApp from "../firebase";
-
 import "../assets/css/entity.css";
 
 class Entity extends React.Component {
@@ -62,61 +60,98 @@ class Entity extends React.Component {
       ) * distancePerBlock;
 
     if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
-      this.nextPrevPos = {
-        x: this.prevPos.x,
-        y: this.prevPos.y
-      };
-      this.prevPos = {
-        x: newXPos,
-        y: newYPos
-      };
+      //loop through entites on map and verify there aren't any positions that match this one
 
-      //update entities on map
-      db.ref(`entities_on_map/${entityHash}`).update({
-        ...entity,
-        pos_x: newXPos,
-        pos_y: newYPos
-      });
+      for (
+        let entLocIndex = 0;
+        entLocIndex < this.entityLocations.length;
+        entLocIndex++
+      ) {
+        const entLoc = this.entityLocations[entLocIndex];
+        if (entLoc.x !== newXPos || entLoc.y !== newYPos) {
+          //let the character move to that spot
+          this.nextPrevPos = {
+            x: this.prevPos.x,
+            y: this.prevPos.y
+          };
+          this.prevPos = {
+            x: newXPos,
+            y: newYPos
+          };
+
+          //update entities on map
+          db.ref(`entities_on_map/${entityHash}`).update({
+            ...entity,
+            pos_x: newXPos,
+            pos_y: newYPos
+          });
+
+          // debugger;
+          // // db.ref(`entities_on_map/${entityHash}`).update({
+          // //   ...entity,
+          // //   pos_x: this.nextPrevPos.x,
+          // //   pos_y: this.nextPrevPos.y
+          // // });
+        } else {
+          //dont let them get there
+          db.ref(`entities_on_map/${entityHash}`).update({
+            ...entity,
+            pos_x: this.nextPrevPos.x,
+            pos_y: this.nextPrevPos.y
+          });
+          return;
+        }
+      }
     }
 
     console.log(newXPos, newYPos);
   }
 
   checkOverlap(e) {
-    const { db, entity, entityHash } = this.props;
-    //loop through entites on map and verify there aren't any positions that match this one
-    for (
-      let entLocIndex = 0;
-      entLocIndex < this.entityLocations.length;
-      entLocIndex++
-    ) {
-      const entLoc = this.entityLocations[entLocIndex];
-      if (entLoc.x === this.prevPos.x && entLoc.y === this.prevPos.y) {
-        debugger;
-        db.ref(`entities_on_map/${entityHash}`).update({
-          ...entity,
-          pos_x: this.nextPrevPos.x,
-          pos_y: this.nextPrevPos.y
-        });
-        this.entityLocations = [];
-
-        return;
-      }
-    }
     this.entityLocations = [];
+
+    // const { db, entity, entityHash } = this.props;
+    // //loop through entites on map and verify there aren't any positions that match this one
+    // for (
+    //   let entLocIndex = 0;
+    //   entLocIndex < this.entityLocations.length;
+    //   entLocIndex++
+    // ) {
+    //   const entLoc = this.entityLocations[entLocIndex];
+    //   if (entLoc.x === this.prevPos.x && entLoc.y === this.prevPos.y) {
+    //     debugger;
+    //     db.ref(`entities_on_map/${entityHash}`).update({
+    //       ...entity,
+    //       pos_x: this.nextPrevPos.x,
+    //       pos_y: this.nextPrevPos.y
+    //     });
+    //   }
+    // }
+    // this.entityLocations = [];
   }
 
   render() {
-    const { entity, baseEntity } = this.props;
+    const {
+      entity,
+      baseEntity,
+      selectedEntity,
+      clearSelectedEntity
+    } = this.props;
+
     const removeWhiteBackground = entity.is_player
       ? {}
       : {
           mixBlendMode: "multiply"
         };
 
+    const selectedStyle = selectedEntity ? { zIndex: `5` } : null;
+
+    const style = Object.assign({}, removeWhiteBackground, selectedStyle);
+
     return (
-      <div className="entity">
+      <div className={`entity`}>
         <img
+          style={style}
           draggable
           onDragStart={e => {
             this.startDragging(e);
@@ -126,13 +161,14 @@ class Entity extends React.Component {
           }}
           onDragEnd={e => {
             this.checkOverlap(e);
+            clearSelectedEntity(e);
           }}
-          style={removeWhiteBackground}
           className={`entity-image`}
           src={`${baseEntity.image}`}
           alt=""
         />
         <div
+          style={selectedStyle}
           className="holder"
           draggable
           onDragStart={e => {
@@ -143,11 +179,12 @@ class Entity extends React.Component {
           }}
           onDragEnd={e => {
             this.checkOverlap(e);
+            clearSelectedEntity(e);
           }}
         >
           <EntityStatusBar entity={entity} baseEntity={baseEntity} />
         </div>
-        <div className="base" />
+        <div style={selectedStyle} className="base" />
       </div>
     );
   }

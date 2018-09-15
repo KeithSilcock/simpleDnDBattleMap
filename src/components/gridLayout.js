@@ -2,6 +2,7 @@ import React from "react";
 import firebaseApp from "../firebase";
 import EntityImage from "./entityImage";
 import Entity from "./entity";
+import MovementIndicator from "./movementIndicator";
 
 import "../assets/css/gridLayout.css";
 
@@ -14,7 +15,9 @@ class GridLayout extends React.Component {
       windowWidth: null,
       windowHeight: null,
       data: null,
-      entityList: null
+      entityList: null,
+      selectedEntityHash: null,
+      selectedEntityLoc: {}
     };
 
     this.initialGridUnitSize = 50;
@@ -99,6 +102,41 @@ class GridLayout extends React.Component {
     e.preventDefault();
   }
 
+  entitySelected(e, entityHash) {
+    const { selectedEntityHash, entityList } = this.state;
+
+    if (entityHash !== selectedEntityHash) {
+      this.setState({
+        ...this.state,
+        selectedEntityHash: entityHash,
+        selectedEntityLoc: {
+          x: entityList[entityHash].pos_x,
+          y: entityList[entityHash].pos_y
+        }
+      });
+      return;
+    }
+    this.setState({
+      ...this.state,
+      selectedEntityHash: null,
+      selectedEntityLoc: {}
+    });
+  }
+
+  clearSelectedEntity(e) {
+    this.setState({
+      ...this.state,
+      selectedEntityHash: null,
+      selectedEntityLoc: {}
+    });
+  }
+
+  clickedMap(e) {
+    if (e.target.className === "tile") {
+      this.clearSelectedEntity(e);
+    }
+  }
+
   // componentWillUnmount() {
   //   debugger;
   //   if (this.baseRef) this.baseRef.off();
@@ -112,7 +150,9 @@ class GridLayout extends React.Component {
       windowHeight,
       windowWidth,
       data,
-      entityList
+      entityList,
+      selectedEntityHash,
+      selectedEntityLoc
     } = this.state;
 
     const numOfColumns = Math.floor(
@@ -135,6 +175,7 @@ class GridLayout extends React.Component {
     );
 
     //create entity list
+    var selectedEntityMovement = null;
     const entities =
       entityList && data
         ? Object.keys(entityList).map((entityHash, index) => {
@@ -154,8 +195,32 @@ class GridLayout extends React.Component {
 
             const style = Object.assign({}, mapPlacement);
 
+            //determine distance entity can move on selected
+            let entitySelected = false;
+            if (selectedEntityHash === entityHash) {
+              const diameterOfSpeed =
+                (baseEntity.speed / this.distancePerBlock) *
+                this.initialGridUnitSize *
+                currentScale;
+
+              selectedEntityMovement = (
+                <MovementIndicator
+                  currentScale={currentScale}
+                  distancePerBlock={this.distancePerBlock}
+                  col={selectedEntityLoc.x}
+                  row={selectedEntityLoc.y}
+                  gridSize={this.initialGridUnitSize}
+                  size={diameterOfSpeed}
+                />
+              );
+              entitySelected = true;
+            }
+
             return (
               <div
+                onClick={e => {
+                  this.entitySelected(e, entityHash);
+                }}
                 className="entity-tile"
                 style={style}
                 col={posX}
@@ -164,12 +229,19 @@ class GridLayout extends React.Component {
                 entityname={baseEntity.name || baseEntity.char_name}
               >
                 <Entity
+                  clearSelectedEntity={this.clearSelectedEntity.bind(this)}
+                  selectedEntity={entitySelected}
                   entityList={entityList}
                   entityHash={entityHash}
                   distancePerBlock={this.distancePerBlock}
                   db={this.db}
                   initialGridUnitSize={this.initialGridUnitSize}
-                  screen={{ x: windowWidth, y: windowHeight, xMargin, yMargin }}
+                  screen={{
+                    x: windowWidth,
+                    y: windowHeight,
+                    xMargin,
+                    yMargin
+                  }}
                   entity={entity}
                   baseEntity={baseEntity}
                 />
@@ -235,6 +307,9 @@ class GridLayout extends React.Component {
 
     return (
       <div
+        onClick={e => {
+          this.clickedMap(e);
+        }}
         style={gridContainerLayout}
         onDragOver={e => {
           this.entityDraggedOver(e);
@@ -243,7 +318,7 @@ class GridLayout extends React.Component {
       >
         {gridArray}
         {entities}
-        {/* {me} */}
+        {selectedEntityMovement}
       </div>
     );
   }
