@@ -10,6 +10,8 @@ class Entity extends React.Component {
 
     this.state = {};
     this.xOffset = 0;
+    this.xStart = 0;
+    this.yStart = 0;
     this.yOffset = 0;
     this.prevPos = { x: 0, y: 0 };
     this.nextPrevPos = { x: 0, y: 0 };
@@ -62,13 +64,11 @@ class Entity extends React.Component {
     } = this.props;
 
     const newXPos =
-      Math.floor(
-        (e.clientX - screen.xMargin + this.xOffset) / initialGridUnitSize
-      ) * distancePerBlock;
+      Math.floor((e.clientX + this.xOffset) / initialGridUnitSize) *
+      distancePerBlock;
     const newYPos =
-      Math.floor(
-        (e.clientY - screen.yMargin + this.yOffset) / initialGridUnitSize
-      ) * distancePerBlock;
+      Math.floor((e.clientY + this.yOffset) / initialGridUnitSize) *
+      distancePerBlock;
 
     if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
       //check to make sure the position isn't off the map
@@ -110,8 +110,6 @@ class Entity extends React.Component {
         pos_y: newYPos
       });
     }
-
-    console.log(newXPos, newYPos);
   }
 
   endDrag(e) {
