@@ -3,6 +3,9 @@
   height: 100%;
   display: grid;
   user-select: none;
+
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 
 .tile {
