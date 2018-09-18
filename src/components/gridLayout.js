@@ -102,10 +102,10 @@ class GridLayout extends React.Component {
     e.preventDefault();
   }
 
-  entitySelected(e, entityHash) {
+  entitySelected(e, entityHash, isMoving = false) {
     const { selectedEntityHash, entityList } = this.state;
 
-    if (entityHash !== selectedEntityHash) {
+    if (entityHash !== selectedEntityHash || isMoving) {
       this.setState({
         ...this.state,
         selectedEntityHash: entityHash,
@@ -196,7 +196,6 @@ class GridLayout extends React.Component {
             const style = Object.assign({}, mapPlacement);
 
             //determine distance entity can move on selected
-            let entitySelected = false;
             if (selectedEntityHash === entityHash) {
               const diameterOfSpeed =
                 (baseEntity.speed / this.distancePerBlock) *
@@ -205,6 +204,7 @@ class GridLayout extends React.Component {
 
               selectedEntityMovement = (
                 <MovementIndicator
+                  isPlayer={entity.is_player}
                   currentScale={currentScale}
                   distancePerBlock={this.distancePerBlock}
                   col={selectedEntityLoc.x}
@@ -213,7 +213,6 @@ class GridLayout extends React.Component {
                   size={diameterOfSpeed}
                 />
               );
-              entitySelected = true;
             }
 
             return (
@@ -221,7 +220,7 @@ class GridLayout extends React.Component {
                 onClick={e => {
                   this.entitySelected(e, entityHash);
                 }}
-                className="entity-tile"
+                className="tile entity-tile"
                 style={style}
                 col={posX}
                 row={posY}
@@ -229,8 +228,10 @@ class GridLayout extends React.Component {
                 entityname={baseEntity.name || baseEntity.char_name}
               >
                 <Entity
+                  selectEntity={this.entitySelected.bind(this)}
+                  currentScale={currentScale}
                   clearSelectedEntity={this.clearSelectedEntity.bind(this)}
-                  selectedEntity={entitySelected}
+                  selectedEntityHash={selectedEntityHash}
                   entityList={entityList}
                   entityHash={entityHash}
                   distancePerBlock={this.distancePerBlock}
@@ -245,7 +246,7 @@ class GridLayout extends React.Component {
                   entity={entity}
                   baseEntity={baseEntity}
                 />
-                {`(${posX * 5}, ${posY * 5})`}
+                {/* {`(${posX * 5}, ${posY * 5})`} */}
               </div>
             );
           })
@@ -255,14 +256,27 @@ class GridLayout extends React.Component {
     const gridArray = [];
     for (let rowIndex = 1; rowIndex < numOfRows; rowIndex++) {
       for (let columnIndex = 1; columnIndex < numOfColumns; columnIndex++) {
+        //set edge case styles
+        const lastRowStyle =
+          rowIndex === numOfRows - 1 ? { borderBottom: "1px solid grey" } : {};
+        const lastColStyle =
+          columnIndex === numOfColumns - 1
+            ? { borderRight: "1px solid grey" }
+            : {};
+
+        const style = Object.assign({}, lastRowStyle, lastColStyle);
+
         //add each item
         gridArray.push(
           <div
+            style={style}
             key={`${columnIndex} ${rowIndex}`}
             className={`tile`}
             col={columnIndex}
             row={rowIndex}
-          >{`(${columnIndex * 5}, ${rowIndex * 5})`}</div>
+          >
+            {/* {`(${columnIndex * 5}, ${rowIndex * 5})`} */}
+          </div>
         );
       }
     }

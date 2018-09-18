@@ -16,9 +16,10 @@ class EntityStatusBar extends React.Component {
         <div className="entity-bar name-plate">
           {capitalizeFirstLetters(entityName)}
         </div>
-        <span>
+        <p className="entity-bar hp">
           HP: {entity.current_hp} / {baseEntity.total_hp}
-        </span>
+        </p>
+        <p className="entity-bar speed">{`Speed: ${baseEntity.speed}`}</p>
       </div>
     );
   }
