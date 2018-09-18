@@ -147,7 +147,7 @@ class Entity extends React.Component {
 
     const style = Object.assign(
       {},
-      removeWhiteBackground,
+      // removeWhiteBackground,
       selectedStyle,
       selectedEntityEnlargementStyle
     );
