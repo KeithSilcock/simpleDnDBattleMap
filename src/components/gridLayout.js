@@ -1,6 +1,5 @@
 import React from "react";
 import firebaseApp from "../firebase";
-import EntityImage from "./entityImage";
 import Entity from "./entity";
 import MovementIndicator from "./movementIndicator";
 
@@ -17,7 +16,8 @@ class GridLayout extends React.Component {
       data: null,
       entityList: null,
       selectedEntityHash: null,
-      selectedEntityLoc: {}
+      selectedEntityLoc: {},
+      backgroundImage: null
     };
 
     this.initialGridUnitSize = 50;
@@ -46,6 +46,20 @@ class GridLayout extends React.Component {
       });
 
       //get images
+
+      //location images
+      const background = this.storage
+        .ref("/terrains")
+        .child(`path_grass_river.jpg`)
+        .getDownloadURL()
+        .then(url => {
+          this.setState({
+            ...this.state,
+            backgroundImage: url
+          });
+        });
+
+      //entity images
       for (
         let entityIndex = 0;
         entityIndex < Object.keys(data.entities_on_map).length;
@@ -152,7 +166,8 @@ class GridLayout extends React.Component {
       data,
       entityList,
       selectedEntityHash,
-      selectedEntityLoc
+      selectedEntityLoc,
+      backgroundImage
     } = this.state;
 
     const numOfColumns = Math.floor(
@@ -319,12 +334,20 @@ class GridLayout extends React.Component {
       margin: `${yMargin}px ${xMargin}px`
     };
 
+    const backgroundStyle = backgroundImage
+      ? {
+          backgroundImage: `url(${backgroundImage})`
+        }
+      : {};
+
+    const gridStyle = Object.assign({}, gridContainerLayout, backgroundStyle);
+
     return (
       <div
         onClick={e => {
           this.clickedMap(e);
         }}
-        style={gridContainerLayout}
+        style={gridStyle}
         onDragOver={e => {
           this.entityDraggedOver(e);
         }}
