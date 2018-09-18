@@ -38,3 +38,9 @@ export function getFirstLetters(text) {
   }
   return response;
 }
+
+export function distanceBetweenTwoPoints(pos1, pos2) {
+  return Math.sqrt(
+    Math.pow(pos1.pos_x - pos2.pos_x, 2) + Math.pow(pos1.pos_y - pos2.pos_y, 2)
+  );
+}

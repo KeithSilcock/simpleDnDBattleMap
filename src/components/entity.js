@@ -1,5 +1,6 @@
 import React from "react";
 import EntityStatusBar from "./entityStatusBar";
+import { distanceBetweenTwoPoints } from "../helpers";
 
 import "../assets/css/entity.css";
 
@@ -16,8 +17,18 @@ class Entity extends React.Component {
     this.lastYPos = 0;
     this.entityLocations = [];
   }
+
+  componentDidMount() {
+    const { entity } = this.props;
+    this.prevPos = { x: entity.pos_x, y: entity.pos_y };
+  }
+
   startDragging(e) {
-    const { entityList, entity } = this.props;
+    const { entityList, entity, selectEntity, entityHash } = this.props;
+
+    //select the entity
+    selectEntity(e, entityHash, true);
+
     const bounds =
       e.target.className === "entity"
         ? e.target.getBoundingClientRect()
@@ -60,41 +71,44 @@ class Entity extends React.Component {
       ) * distancePerBlock;
 
     if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
-      //loop through entites on map and verify there aren't any positions that match this one
+      //check to make sure the position isn't off the map
+      if (newXPos <= 0 || newYPos <= 0) {
+        return;
+      }
+      if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
+        return;
+      }
+      if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
+        return;
+      }
 
+      //loop through entites on map and verify there aren't any positions that match this one
       for (
         let entLocIndex = 0;
         entLocIndex < this.entityLocations.length;
         entLocIndex++
       ) {
         const entLoc = this.entityLocations[entLocIndex];
-        if (entLoc.x !== newXPos || entLoc.y !== newYPos) {
-          //let the character move to that spot
-          this.nextPrevPos = {
-            x: this.prevPos.x,
-            y: this.prevPos.y
-          };
-          this.prevPos = {
-            x: newXPos,
-            y: newYPos
-          };
-
-          //update entities on map
-          db.ref(`entities_on_map/${entityHash}`).update({
-            ...entity,
-            pos_x: newXPos,
-            pos_y: newYPos
-          });
-        } else {
-          //dont let them get there
-          db.ref(`entities_on_map/${entityHash}`).update({
-            ...entity,
-            pos_x: this.nextPrevPos.x,
-            pos_y: this.nextPrevPos.y
-          });
+        if (entLoc.x === newXPos && entLoc.y === newYPos) {
+          // dont let the character move to that spot
           return;
         }
       }
+      this.nextPrevPos = {
+        x: this.prevPos.x,
+        y: this.prevPos.y
+      };
+      this.prevPos = {
+        x: newXPos,
+        y: newYPos
+      };
+
+      //update entities on map
+      db.ref(`entities_on_map/${entityHash}`).update({
+        ...entity,
+        pos_x: newXPos,
+        pos_y: newYPos
+      });
     }
 
     console.log(newXPos, newYPos);
@@ -108,22 +122,51 @@ class Entity extends React.Component {
     const {
       entity,
       baseEntity,
-      selectedEntity,
-      clearSelectedEntity
+      selectedEntityHash,
+      clearSelectedEntity,
+      entityHash,
+      entityList,
+      currentScale
     } = this.props;
 
+    const entityType = entity.is_player ? "player" : "monster";
     const removeWhiteBackground = entity.is_player
       ? {}
       : {
           mixBlendMode: "multiply"
         };
 
-    const selectedStyle = selectedEntity ? { zIndex: `5` } : null;
+    const selectedStyle =
+      selectedEntityHash === entityHash ? { zIndex: `5` } : null;
 
-    const style = Object.assign({}, removeWhiteBackground, selectedStyle);
+    const selectedEntityEnlargementStyle =
+      selectedEntityHash === entityHash
+        ? {
+            width: `${200 * currentScale}px`,
+            transform: "translate(-25%)"
+          }
+        : {};
+
+    const style = Object.assign(
+      {},
+      removeWhiteBackground,
+      selectedStyle,
+      selectedEntityEnlargementStyle
+    );
+
+    let distanceToSelectedEntity = null;
+    if (selectedEntityHash && selectedEntityHash !== entityHash) {
+      const selectedEntity = entityList[selectedEntityHash];
+      distanceToSelectedEntity = Math.floor(
+        distanceBetweenTwoPoints(selectedEntity, entity)
+      );
+    }
 
     return (
-      <div className={`entity`}>
+      <div className={`entity ${entityType}`}>
+        {distanceToSelectedEntity ? (
+          <div className="distance container">{`${distanceToSelectedEntity} ft`}</div>
+        ) : null}
         <img
           style={style}
           draggable

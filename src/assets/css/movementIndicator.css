@@ -1,8 +1,6 @@
 .movementIndicator {
   position: absolute;
 
-  /* left: 100%; */
-  /* top: 100%; */
   transform: translate(-50%, -50%);
 
   border-radius: 50%;
@@ -11,16 +9,34 @@
   z-index: 1;
 }
 
+.movementIndicator.origin {
+  width: 10px;
+  height: 10px;
+  background-color: black;
+  border-radius: 50%;
+  z-index: 10;
+}
+
 /* initial circle */
-.movementIndicator.movement-circle {
+.player .movementIndicator.movement-circle {
   background-color: rgb(0, 187, 0);
-  background-color: rgba(0, 187, 0, 0.4);
-  border: 3px solid rgb(0, 139, 0);
+  background-color: rgba(38, 207, 38, 0.2);
+  border: 3px solid rgb(68, 247, 68);
+}
+.monster .movementIndicator.movement-circle {
+  background-color: rgb(187, 0, 0);
+  background-color: rgba(207, 38, 38, 0.2);
+  border: 3px solid rgb(247, 68, 68);
 }
 
 /* dash circle */
-.movementIndicator.dash-circle {
+.player .movementIndicator.dash-circle {
   background-color: rgb(0, 187, 0);
-  background-color: rgba(251, 255, 0, 0.4);
-  border: 3px solid rgb(211, 155, 0);
+  background-color: rgba(168, 255, 86, 0.1);
+  border: 1px solid rgb(168, 255, 86);
+}
+.monster .movementIndicator.dash-circle {
+  background-color: rgb(187, 112, 0);
+  background-color: rgba(207, 134, 38, 0.1);
+  border: 1px solid rgb(247, 149, 68);
 }
