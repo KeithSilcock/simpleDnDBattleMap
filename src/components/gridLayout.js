@@ -13,6 +13,8 @@ class GridLayout extends React.Component {
       currentScale: 1,
       windowWidth: null,
       windowHeight: null,
+      inputWidth: 100,
+      inputHeight: 100,
       data: null,
       entityList: null,
       selectedEntityHash: null,
@@ -151,6 +153,15 @@ class GridLayout extends React.Component {
     }
   }
 
+  gridInputSizeChange(e) {
+    const { name, value } = e.target;
+
+    this.setState({
+      ...this.state,
+      [name]: value
+    });
+  }
+
   // componentWillUnmount() {
   //   debugger;
   //   if (this.baseRef) this.baseRef.off();
@@ -167,27 +178,32 @@ class GridLayout extends React.Component {
       entityList,
       selectedEntityHash,
       selectedEntityLoc,
-      backgroundImage
+      backgroundImage,
+      inputWidth,
+      inputHeight
     } = this.state;
 
-    const numOfColumns = Math.floor(
-      (windowWidth / this.initialGridUnitSize) * currentScale
-    );
-    const xMargin = Math.round(
-      (((windowWidth / this.initialGridUnitSize) * currentScale -
-        (numOfColumns - 1)) *
-        this.initialGridUnitSize) /
-        2
-    );
-    const numOfRows = Math.floor(
-      (windowHeight / this.initialGridUnitSize) * currentScale
-    );
-    const yMargin = Math.round(
-      (((windowHeight / this.initialGridUnitSize) * currentScale -
-        (numOfRows - 1)) *
-        this.initialGridUnitSize) /
-        2
-    );
+    const properWidth = inputWidth / this.distancePerBlock;
+    const properHeight = inputHeight / this.distancePerBlock;
+
+    // const numOfColumns = Math.floor(
+    //   (windowWidth / this.initialGridUnitSize) * currentScale
+    // );
+    const xMargin = 15; //Math.round(
+    //   (((windowWidth / this.initialGridUnitSize) * currentScale -
+    //     (properWidth - 1)) *
+    //     this.initialGridUnitSize) /
+    //     2
+    // );
+    // const numOfRows = Math.floor(
+    //   (windowHeight / this.initialGridUnitSize) * currentScale
+    // );
+    const yMargin = 15; // Math.round(
+    //   (((windowHeight / this.initialGridUnitSize) * currentScale -
+    //     (properHeight - 1)) *
+    //     this.initialGridUnitSize) /
+    //     2
+    // );
 
     //create entity list
     var selectedEntityMovement = null;
@@ -269,15 +285,13 @@ class GridLayout extends React.Component {
 
     //create grid array
     const gridArray = [];
-    for (let rowIndex = 1; rowIndex < numOfRows; rowIndex++) {
-      for (let columnIndex = 1; columnIndex < numOfColumns; columnIndex++) {
+    for (let rowIndex = 1; rowIndex <= properHeight; rowIndex++) {
+      for (let columnIndex = 1; columnIndex <= properWidth; columnIndex++) {
         //set edge case styles
         const lastRowStyle =
-          rowIndex === numOfRows - 1 ? { borderBottom: "1px solid grey" } : {};
+          rowIndex === properHeight ? { borderBottom: "1px solid grey" } : {};
         const lastColStyle =
-          columnIndex === numOfColumns - 1
-            ? { borderRight: "1px solid grey" }
-            : {};
+          columnIndex === properWidth ? { borderRight: "1px solid grey" } : {};
 
         const style = Object.assign({}, lastRowStyle, lastColStyle);
 
@@ -300,8 +314,8 @@ class GridLayout extends React.Component {
     if (entities && entities.length) {
       //sort entities based on placement on map
       const sortedEntities = entities.sort((a, b) => {
-        const aCrit = a.props.row * numOfColumns - 1 + a.props.col;
-        const bCrit = b.props.row * numOfColumns - 1 + b.props.col;
+        const aCrit = a.props.row * properWidth - 1 + a.props.col;
+        const bCrit = b.props.row * properWidth - 1 + b.props.col;
         if (aCrit < bCrit) {
           return -1;
         } else if (bCrit < aCrit) {
@@ -318,44 +332,76 @@ class GridLayout extends React.Component {
         const entity = sortedEntities[entityIndex];
 
         const entity_pos =
-          (numOfColumns - 1) * (entity.props.row - 1) +
+          properWidth * (entity.props.row - 1) +
           entity.props.col -
           entityIndex -
           1;
+
         const removedEmptyDiv = gridArray.splice(entity_pos, 1);
+        // const removedEmptyDiv = gridArray.splice(entity_pos, 1, entity);
       }
     }
 
     const gridContainerLayout = {
-      gridTemplateColumns: `repeat(${numOfColumns - 1}, ${this
-        .initialGridUnitSize * currentScale}px)`,
-      gridTemplateRows: `repeat(${numOfRows - 1}, ${this.initialGridUnitSize *
+      gridTemplateColumns: `repeat(${properWidth}, ${this.initialGridUnitSize *
+        currentScale}px)`,
+      gridTemplateRows: `repeat(${properHeight}, ${this.initialGridUnitSize *
         currentScale}px)`,
       margin: `${yMargin}px ${xMargin}px`
     };
 
     const backgroundStyle = backgroundImage
       ? {
-          backgroundImage: `url(${backgroundImage})`
+          // backgroundImage: `url(${backgroundImage})`,
+          width: `${properWidth *
+            // this.distancePerBlock *
+            this.initialGridUnitSize}px`
         }
       : {};
 
     const gridStyle = Object.assign({}, gridContainerLayout, backgroundStyle);
 
     return (
-      <div
-        onClick={e => {
-          this.clickedMap(e);
-        }}
-        style={gridStyle}
-        onDragOver={e => {
-          this.entityDraggedOver(e);
-        }}
-        className="grid-container"
-      >
-        {gridArray}
-        {entities}
-        {selectedEntityMovement}
+      <div className="game-container">
+        <div className="dimensions container">
+          <div className="dimensions width">
+            <span>Width: </span>
+            <input
+              type="number"
+              name="inputWidth"
+              value={inputWidth}
+              onChange={e => {
+                this.gridInputSizeChange(e);
+              }}
+            />
+          </div>
+          <div className="dimensions height">
+            {" "}
+            <span>Height: </span>
+            <input
+              type="number"
+              name="inputHeight"
+              value={inputHeight}
+              onChange={e => {
+                this.gridInputSizeChange(e);
+              }}
+            />
+          </div>
+        </div>
+        <div
+          onClick={e => {
+            this.clickedMap(e);
+          }}
+          style={gridStyle}
+          onDragOver={e => {
+            this.entityDraggedOver(e);
+          }}
+          className="grid-container"
+        >
+          {gridArray}
+          {entities}
+          {selectedEntityMovement}
+        </div>
       </div>
     );
   }
