@@ -8,6 +8,7 @@ import "../assets/css/gridLayout.css";
 class GridLayout extends React.Component {
   constructor(props) {
     super(props);
+    //test
 
     this.state = {
       currentScale: 1,
