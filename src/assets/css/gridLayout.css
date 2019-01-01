@@ -3,6 +3,7 @@
 .grid-container {
   /* width: auto; */
   /*height: 100%;*/
+  width: 75vw;
   display: grid;
   user-select: none;
 
