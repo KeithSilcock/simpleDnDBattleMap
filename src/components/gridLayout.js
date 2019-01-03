@@ -14,10 +14,6 @@ class GridLayout extends React.Component {
       currentScale: 1,
       windowWidth: null,
       windowHeight: null,
-      settings: {
-        board_size_x: 100,
-        board_size_y: 100
-      },
       data: null,
       entityList: null,
       selectedEntityHash: null,
@@ -47,19 +43,10 @@ class GridLayout extends React.Component {
   }
 
   componentDidMount() {
-    const { settings } = this.state;
-    this.db.ref(`settings`).on("value", snapshot => {
-      console.log("settings snapshot", snapshot.val());
-      const initial_settings = snapshot.val();
-      this.setState({
-        ...this.state,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        settings: {
-          ...settings,
-          ...initial_settings
-        }
-      });
+    this.setState({
+      ...this.state,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight
     });
 
     //pulling initial data for reference
@@ -180,22 +167,13 @@ class GridLayout extends React.Component {
 
   settingsChange(e) {
     const { name, value } = e.target;
-    const { settings } = this.state;
     console.log("changing input size: ", name, "to", value);
 
     this.db.ref(`settings/`).update(
       {
         [name]: value
       },
-      () => {
-        this.setState({
-          ...this.state,
-          settings: {
-            ...settings,
-            [name]: value
-          }
-        });
-      }
+      () => {}
     );
   }
 
@@ -215,9 +193,9 @@ class GridLayout extends React.Component {
       entityList,
       selectedEntityHash,
       selectedEntityLoc,
-      backgroundImage,
-      settings
+      backgroundImage
     } = this.state;
+    const { settings } = this.props;
 
     const properWidth = settings.board_size_x / this.distancePerBlock;
     const properHeight = settings.board_size_y / this.distancePerBlock;

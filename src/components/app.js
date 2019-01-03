@@ -2,6 +2,8 @@ import React from "react";
 import GridLayout from "./gridLayout";
 import Menu from "./menu";
 
+import firebaseApp from "../firebase";
+
 import "../assets/css/app.css";
 
 class App extends React.Component {
@@ -9,25 +11,66 @@ class App extends React.Component {
     super(props);
 
     this.state = {
-      currentBackground: ""
+      settings: { board_size_x: 100, board_size_y: 100, current_board: null },
+      activeBackground: ""
     };
+
+    this.db = firebaseApp.database();
+    this.storage = firebaseApp.storage();
   }
 
-  setBackground(url) {
-    console.log("got background", url);
-    this.setState({
-      ...this.state,
-      currentBackground: url
+  componentDidMount() {
+    this.getSettings();
+  }
+
+  getSettings() {
+    const { settings } = this.state;
+    this.db.ref(`settings`).on("value", snapshot => {
+      const initial_settings = snapshot.val();
+      console.log("settings snapshot", initial_settings);
+
+      this.setState(
+        {
+          ...this.state,
+          settings: initial_settings
+        },
+        () => {
+          console.log("Initial Settings", this.state);
+          this.setBackground(this.state.settings.current_board);
+        }
+      );
     });
   }
 
+  setBackground(url) {
+    this.db
+      .ref("settings")
+      .update({
+        current_board: url
+      })
+      .then(() => {
+        this.setState(
+          {
+            ...this.state,
+            activeBackground: url
+          },
+          () => {
+            console.log("got background", url);
+          }
+        );
+      });
+  }
+
   render() {
-    const { currentBackground } = this.state;
+    const { activeBackground, settings } = this.state;
 
     return (
       <div className="app-container">
-        <Menu setBackground={url => this.setBackground(url)} />
-        <GridLayout backgroundURL={currentBackground} />
+        <Menu
+          settings={settings}
+          setBackground={url => this.setBackground(url)}
+        />
+        <GridLayout settings={settings} backgroundURL={activeBackground} />
       </div>
     );
   }
