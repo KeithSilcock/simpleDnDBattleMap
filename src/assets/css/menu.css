@@ -1,0 +1,27 @@
+.menu-container {
+  width: 25vw;
+}
+
+.menu-item {
+}
+
+.backgrounds-list-container {
+  position: absolute;
+  /* left: 10%; */
+  /* top: 10%; */
+  z-index: 15;
+}
+.backgrounds-list,
+.menu-items {
+  position: relative;
+  list-style: none;
+  padding: 0;
+}
+.backgrounds-list-container {
+  background-color: white;
+  border: 1px solid black;
+}
+
+.element-image {
+  width: 350px;
+}
