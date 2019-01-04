@@ -32,6 +32,7 @@ class GridLayout extends React.Component {
   componentWillReceiveProps(newProps) {
     const { backgroundURL } = this.props;
     const newbackgroundURL = newProps.backgroundURL;
+    const updateMap = newProps.updateMap;
 
     if (backgroundURL !== newbackgroundURL) {
       console.log(newbackgroundURL);
@@ -39,6 +40,11 @@ class GridLayout extends React.Component {
         ...this.state,
         backgroundImage: newbackgroundURL
       });
+    }
+
+    if (updateMap) {
+      this.getSetEntities();
+      this.props.mapUpdated();
     }
   }
 
@@ -58,20 +64,6 @@ class GridLayout extends React.Component {
         ...this.state,
         data
       });
-
-      //get images
-
-      // location images
-      // const background = this.storage
-      //   .ref("/terrains")
-      //   .child(`path_grass_river.jpg`)
-      //   .getDownloadURL()
-      //   .then(url => {
-      //     this.setState({
-      //       ...this.state,
-      //       backgroundImage: url
-      //     });
-      //   });
 
       //entity images
       for (
@@ -122,6 +114,51 @@ class GridLayout extends React.Component {
         ...this.state,
         entityList
       });
+    });
+  }
+
+  getSetEntities() {
+    this.db.ref("entities_on_map").once("value", snapshot => {
+      const entities = snapshot.val();
+
+      for (
+        let entityIndex = 0;
+        entityIndex < Object.keys(entities).length;
+        entityIndex++
+      ) {
+        const entityHash = Object.keys(data.entities_on_map)[entityIndex];
+        const entity = data.entities_on_map[entityHash];
+
+        if (entity.is_player) {
+          const entityTypePath = `/${entity.base_hash}/${
+            data.players[entity.base_hash].char_name
+          }.png`;
+
+          const imageURL = this.storage
+            .ref(`/players`)
+            .child(`${entityTypePath}`)
+            .getDownloadURL()
+            .then(url => {
+              const { data } = this.state;
+
+              const updatedData = {
+                ...data,
+                players: {
+                  ...data.players,
+                  [entity.base_hash]: {
+                    ...data.players[entity.base_hash],
+                    image: url
+                  }
+                }
+              };
+
+              this.setState({
+                ...this.state,
+                data: updatedData
+              });
+            });
+        }
+      }
     });
   }
 
@@ -262,7 +299,10 @@ class GridLayout extends React.Component {
 
             return (
               <div
-                onClick={e => {
+                // onClick={e => {
+                //   this.entitySelected(e, entityHash);
+                // }}
+                onMouseDown={e => {
                   this.entitySelected(e, entityHash);
                 }}
                 className="tile entity-tile"

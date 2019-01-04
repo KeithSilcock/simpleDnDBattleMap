@@ -12,7 +12,8 @@ class App extends React.Component {
 
     this.state = {
       settings: { board_size_x: 100, board_size_y: 100, current_board: null },
-      activeBackground: ""
+      activeBackground: "",
+      updateMap: false
     };
 
     this.db = firebaseApp.database();
@@ -61,16 +62,44 @@ class App extends React.Component {
       });
   }
 
+  mapUpdated() {
+    this.setState({
+      ...this.state,
+      updateMap: false
+    });
+  }
+
+  mapNeedsToUpdate() {
+    this.setState({
+      ...this.state,
+      updateMap: true
+    });
+  }
+
   render() {
-    const { activeBackground, settings } = this.state;
+    const { activeBackground, settings, updateMap } = this.state;
 
     return (
       <div className="app-container">
+        <link
+          rel="stylesheet"
+          href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
+          integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
+          crossOrigin="anonymous"
+        />
         <Menu
           settings={settings}
           setBackground={url => this.setBackground(url)}
+          mapNeedsToUpdate={e => {
+            this.mapNeedsToUpdate();
+          }}
         />
-        <GridLayout settings={settings} backgroundURL={activeBackground} />
+        <GridLayout
+          settings={settings}
+          updateMap={updateMap}
+          mapUpdated={e => this.mapUpdated()}
+          backgroundURL={activeBackground}
+        />
       </div>
     );
   }
