@@ -22,6 +22,7 @@ class MonsterMenu extends React.Component {
         total_hp: "",
         desc: "",
         speed: "",
+        size: "",
         file: null
       }
     };
@@ -43,7 +44,7 @@ class MonsterMenu extends React.Component {
       });
     });
   }
-  createmonstersList() {
+  createMonstersList() {
     const { monsters } = this.state;
 
     return Object.keys(monsters).map((monster_hash, index) => {
@@ -97,7 +98,23 @@ class MonsterMenu extends React.Component {
       modal_open: false
     });
   }
+
+  setMonsterImage(e) {
+    const { new_monster_data } = this.state;
+    const file = e.target.files[0];
+    this.setState({
+      ...this.state,
+      new_monster_data: {
+        ...new_monster_data,
+        file
+      }
+    });
+  }
+
   open_popup() {
+    const { new_monster_data } = this.state;
+    const { name, desc, size, speed, total_hp } = new_monster_data;
+
     const modal_html = (
       <div className="upload-file-modal">
         <div className="monster-info">
@@ -116,6 +133,7 @@ class MonsterMenu extends React.Component {
           <input
             onChange={e => this.changeNewMonsterStats(e)}
             name="name"
+            // value={name}
             type="text"
           />
 
@@ -123,18 +141,28 @@ class MonsterMenu extends React.Component {
           <input
             onChange={e => this.changeNewMonsterStats(e)}
             name="desc"
+            // value={desc}
             type="text"
           />
 
           <label htmlFor="total_hp">Monster HP: </label>
           <input
             onChange={e => this.changeNewMonsterStats(e)}
-            name="desc"
+            name="total_hp"
+            // value={total_hp}
             type="text"
           />
 
-          <label htmlFor="speed">
-            Monster Speed{" "}
+          <label htmlFor="speed">Monster Speed:</label>
+          <input
+            onChange={e => this.changeNewMonsterStats(e)}
+            name="speed"
+            // value={speed}
+            type="text"
+          />
+
+          <label htmlFor="size">
+            Monster Size{" "}
             <i
               className="fas fa-info-circle"
               title="Most monsters are size 1. Ask Keith if they need to be bigger."
@@ -143,14 +171,8 @@ class MonsterMenu extends React.Component {
           </label>
           <input
             onChange={e => this.changeNewMonsterStats(e)}
-            name="desc"
-            type="text"
-          />
-
-          <label htmlFor="speed">Monster Size: </label>
-          <input
-            onChange={e => this.changeNewMonsterStats(e)}
-            name="desc"
+            name="size"
+            // value={size}
             type="text"
           />
         </div>
@@ -178,39 +200,28 @@ class MonsterMenu extends React.Component {
     });
   }
 
-  setMonsterImage() {
-    const file = e.target.files[0];
-    const { new_monster_data } = this.state;
-
-    this.setState(
-      {
-        ...this.state,
-        new_monster_data: {
-          ...new_monster_data,
-          file
-        }
-      },
-      () => {}
-    );
-  }
-
   confirmUpload(e) {
-    const file = e.target.files[0];
     const { new_monster_data } = this.state;
 
-    this.setState(
-      {
-        ...this.state,
-        new_monster_data: {
-          ...new_monster_data,
-          file
-        }
-      },
-      () => {
-        // this.open_popup(modal_html);
-        console.log(file);
-      }
-    );
+    const storage_ref = this.storage.ref(`/monsters/${new_monster_data.name}`);
+    //upload image
+    storage_ref.put(new_monster_data.file).then(image_upload_snapshot => {
+      //get new url:
+      image_upload_snapshot.ref.getDownloadURL().then(downloadURL => {
+        //update database
+        const newEntRef = this.db.ref("monster_list_base").push();
+        newEntRef.set(
+          {
+            ...new_monster_data,
+            image: downloadURL
+          },
+          () => {
+            this.updateMonsterList();
+            this.close_popup();
+          }
+        );
+      });
+    });
   }
 
   addEntityToMap(entityHash) {
@@ -232,12 +243,10 @@ class MonsterMenu extends React.Component {
   render() {
     const { monster_menu_open, modal_open, modal_data } = this.state;
 
-    console.log("modal open?", modal_open);
-
     const modal_display = modal_open ? (
       <PopUp
         close_function={e => this.close_popup(e)}
-        submit_function={() => this.uploadBackground()}
+        submit_function={() => this.confirmUpload()}
         html={modal_data.html}
         buttons={modal_data.buttons}
       />
@@ -253,7 +262,7 @@ class MonsterMenu extends React.Component {
         <button className="new-monster" onClick={e => this.open_popup()}>
           New Monster
         </button>
-        <ul className="monsters-list">{this.createmonstersList()}</ul>
+        <ul className="monsters-list">{this.createMonstersList()}</ul>
       </div>
     ) : (
       ""
