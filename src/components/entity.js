@@ -18,6 +18,7 @@ class Entity extends React.Component {
     this.lastXPos = 0;
     this.lastYPos = 0;
     this.entityLocations = [];
+    this.justStartedDragging = false;
   }
 
   componentDidMount() {
@@ -27,6 +28,10 @@ class Entity extends React.Component {
 
   startDragging(e) {
     const { entityList, entity, selectEntity, entityHash } = this.props;
+
+    this.xStart = e.clientX;
+    this.yStart = e.clientY;
+    this.justStartedDragging = true;
 
     //select the entity
     selectEntity(e, entityHash, true);
@@ -39,12 +44,12 @@ class Entity extends React.Component {
     this.xOffset =
       bounds.width / 2 -
       (e.clientX - bounds.left + this.props.initialGridUnitSize);
-    this.yOffset = bounds.bottom - e.clientY;
+    this.yOffset = bounds.bottom - (e.clientY - window.pageYOffset);
 
-    for (let entityHash in entityList) {
-      const entityOnMap = entityList[entityHash];
+    for (let uniqueEntityHash in entityList) {
+      const entityOnMap = entityList[uniqueEntityHash];
 
-      if (entityOnMap.base_hash !== entity.base_hash) {
+      if (uniqueEntityHash !== entityHash) {
         this.entityLocations.push({
           x: entityOnMap.pos_x,
           y: entityOnMap.pos_y
@@ -62,12 +67,21 @@ class Entity extends React.Component {
       entity,
       distancePerBlock
     } = this.props;
+    console.log("clientx: ", e.clientX);
 
+    if (this.justStartedDragging) {
+      var clientX = this.xStart;
+      var clientY = this.yStart;
+      this.justStartedDragging = false;
+    } else {
+      var clientX = e.clientX;
+      var clientY = e.clientY;
+    }
     const newXPos =
-      Math.floor((e.clientX + this.xOffset) / initialGridUnitSize) *
+      Math.floor((clientX + this.xOffset) / initialGridUnitSize) *
       distancePerBlock;
     const newYPos =
-      Math.floor((e.clientY + this.yOffset) / initialGridUnitSize) *
+      Math.floor((clientY + this.yOffset) / initialGridUnitSize) *
       distancePerBlock;
 
     if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
@@ -169,12 +183,15 @@ class Entity extends React.Component {
           style={style}
           draggable
           onDragStart={e => {
+            e.preventDefault();
             this.startDragging(e);
           }}
           onDrag={e => {
+            e.preventDefault();
             this.dragging(e);
           }}
           onDragEnd={e => {
+            e.preventDefault();
             this.endDrag(e);
             clearSelectedEntity(e);
           }}

@@ -5,6 +5,17 @@
 .menu-item {
 }
 
+.element-image {
+  width: 350px;
+}
+
+.upload-file-modal input {
+  max-width: 50%;
+}
+
+/**************/
+/* BACKGROUND */
+/**************/
 .backgrounds-list-container {
   position: absolute;
   /* left: 10%; */
@@ -22,6 +33,28 @@
   border: 1px solid black;
 }
 
-.element-image {
-  width: 350px;
+/***********/
+/* MONSTER */
+/***********/
+
+.monsters-list-container {
+  position: absolute;
+  /* left: 10%; */
+  /* top: 10%; */
+  z-index: 15;
+}
+.monsters-list,
+.menu-items {
+  position: relative;
+  list-style: none;
+  padding: 0;
+}
+.monsters-list-container {
+  background-color: white;
+  border: 1px solid black;
+}
+
+.monster-info {
+  display: flex;
+  flex-flow: column;
 }

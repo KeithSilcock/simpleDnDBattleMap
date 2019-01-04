@@ -14,10 +14,6 @@ class GridLayout extends React.Component {
       currentScale: 1,
       windowWidth: null,
       windowHeight: null,
-      settings: {
-        board_size_x: 100,
-        board_size_y: 100
-      },
       data: null,
       entityList: null,
       selectedEntityHash: null,
@@ -36,6 +32,7 @@ class GridLayout extends React.Component {
   componentWillReceiveProps(newProps) {
     const { backgroundURL } = this.props;
     const newbackgroundURL = newProps.backgroundURL;
+    const updateMap = newProps.updateMap;
 
     if (backgroundURL !== newbackgroundURL) {
       console.log(newbackgroundURL);
@@ -44,22 +41,18 @@ class GridLayout extends React.Component {
         backgroundImage: newbackgroundURL
       });
     }
+
+    if (updateMap) {
+      this.getSetEntities();
+      this.props.mapUpdated();
+    }
   }
 
   componentDidMount() {
-    const { settings } = this.state;
-    this.db.ref(`settings`).on("value", snapshot => {
-      console.log("settings snapshot", snapshot.val());
-      const initial_settings = snapshot.val();
-      this.setState({
-        ...this.state,
-        windowWidth: window.innerWidth,
-        windowHeight: window.innerHeight,
-        settings: {
-          ...settings,
-          ...initial_settings
-        }
-      });
+    this.setState({
+      ...this.state,
+      windowWidth: window.innerWidth,
+      windowHeight: window.innerHeight
     });
 
     //pulling initial data for reference
@@ -71,20 +64,6 @@ class GridLayout extends React.Component {
         ...this.state,
         data
       });
-
-      //get images
-
-      // location images
-      // const background = this.storage
-      //   .ref("/terrains")
-      //   .child(`path_grass_river.jpg`)
-      //   .getDownloadURL()
-      //   .then(url => {
-      //     this.setState({
-      //       ...this.state,
-      //       backgroundImage: url
-      //     });
-      //   });
 
       //entity images
       for (
@@ -138,6 +117,51 @@ class GridLayout extends React.Component {
     });
   }
 
+  getSetEntities() {
+    this.db.ref("entities_on_map").once("value", snapshot => {
+      const entities = snapshot.val();
+
+      for (
+        let entityIndex = 0;
+        entityIndex < Object.keys(entities).length;
+        entityIndex++
+      ) {
+        const entityHash = Object.keys(data.entities_on_map)[entityIndex];
+        const entity = data.entities_on_map[entityHash];
+
+        if (entity.is_player) {
+          const entityTypePath = `/${entity.base_hash}/${
+            data.players[entity.base_hash].char_name
+          }.png`;
+
+          const imageURL = this.storage
+            .ref(`/players`)
+            .child(`${entityTypePath}`)
+            .getDownloadURL()
+            .then(url => {
+              const { data } = this.state;
+
+              const updatedData = {
+                ...data,
+                players: {
+                  ...data.players,
+                  [entity.base_hash]: {
+                    ...data.players[entity.base_hash],
+                    image: url
+                  }
+                }
+              };
+
+              this.setState({
+                ...this.state,
+                data: updatedData
+              });
+            });
+        }
+      }
+    });
+  }
+
   entityDraggedOver(e) {
     //used to fix draggable items from jumping to 0,0
     e.preventDefault();
@@ -180,22 +204,13 @@ class GridLayout extends React.Component {
 
   settingsChange(e) {
     const { name, value } = e.target;
-    const { settings } = this.state;
     console.log("changing input size: ", name, "to", value);
 
     this.db.ref(`settings/`).update(
       {
         [name]: value
       },
-      () => {
-        this.setState({
-          ...this.state,
-          settings: {
-            ...settings,
-            [name]: value
-          }
-        });
-      }
+      () => {}
     );
   }
 
@@ -215,9 +230,9 @@ class GridLayout extends React.Component {
       entityList,
       selectedEntityHash,
       selectedEntityLoc,
-      backgroundImage,
-      settings
+      backgroundImage
     } = this.state;
+    const { settings } = this.props;
 
     const properWidth = settings.board_size_x / this.distancePerBlock;
     const properHeight = settings.board_size_y / this.distancePerBlock;
@@ -284,7 +299,10 @@ class GridLayout extends React.Component {
 
             return (
               <div
-                onClick={e => {
+                // onClick={e => {
+                //   this.entitySelected(e, entityHash);
+                // }}
+                onMouseDown={e => {
                   this.entitySelected(e, entityHash);
                 }}
                 className="tile entity-tile"

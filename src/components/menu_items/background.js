@@ -9,7 +9,7 @@ class Background extends React.Component {
 
     this.state = {
       background_menu_open: false,
-      backgrounds: [],
+      backgrounds: {},
       modal_open: false,
       modal_data: {
         html: "",
