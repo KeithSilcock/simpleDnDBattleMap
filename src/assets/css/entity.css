@@ -5,7 +5,7 @@
 .entity {
   cursor: pointer;
   height: 50px;
-  width: 200px;
+  /* width: 200px; */
 }
 .entity-image {
   width: 100px;

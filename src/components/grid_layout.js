@@ -1,7 +1,7 @@
 import React from "react";
 import firebaseApp from "../firebase";
 import Entity from "./entity";
-import MovementIndicator from "./movementIndicator";
+import MovementIndicator from "./movement_indicator";
 
 import "../assets/css/gridLayout.css";
 
@@ -27,6 +27,8 @@ class GridLayout extends React.Component {
     this.entRef = null;
     this.db = firebaseApp.database();
     this.storage = firebaseApp.storage();
+    this.offset_x = 0;
+    this.offset_y = 0;
   }
 
   componentWillReceiveProps(newProps) {
@@ -35,7 +37,6 @@ class GridLayout extends React.Component {
     const updateMap = newProps.updateMap;
 
     if (backgroundURL !== newbackgroundURL) {
-      console.log(newbackgroundURL);
       this.setState({
         ...this.state,
         backgroundImage: newbackgroundURL
@@ -54,6 +55,9 @@ class GridLayout extends React.Component {
       windowWidth: window.innerWidth,
       windowHeight: window.innerHeight
     });
+
+    this.offset_x = this.grid.getBoundingClientRect().left;
+    this.offset_y = this.grid.getBoundingClientRect().top;
 
     //pulling initial data for reference
     const BASE_PATH = `/`;
@@ -74,35 +78,35 @@ class GridLayout extends React.Component {
         const entityHash = Object.keys(data.entities_on_map)[entityIndex];
         const entity = data.entities_on_map[entityHash];
 
-        if (entity.is_player) {
-          const entityTypePath = `/${entity.base_hash}/${
-            data.players[entity.base_hash].char_name
-          }.png`;
+        // if (entity.is_player) {
+        //   const entityTypePath = `/${entity.base_hash}/${
+        //     data.players[entity.base_hash].char_name
+        //   }.png`;
 
-          const imageURL = this.storage
-            .ref(`/players`)
-            .child(`${entityTypePath}`)
-            .getDownloadURL()
-            .then(url => {
-              const { data } = this.state;
+        //   const imageURL = this.storage
+        //     .ref(`/players`)
+        //     .child(`${entityTypePath}`)
+        //     .getDownloadURL()
+        //     .then(url => {
+        //       const { data } = this.state;
 
-              const updatedData = {
-                ...data,
-                players: {
-                  ...data.players,
-                  [entity.base_hash]: {
-                    ...data.players[entity.base_hash],
-                    image: url
-                  }
-                }
-              };
+        //       const updatedData = {
+        //         ...data,
+        //         players: {
+        //           ...data.players,
+        //           [entity.base_hash]: {
+        //             ...data.players[entity.base_hash],
+        //             image: url
+        //           }
+        //         }
+        //       };
 
-              this.setState({
-                ...this.state,
-                data: updatedData
-              });
-            });
-        }
+        //       this.setState({
+        //         ...this.state,
+        //         data: updatedData
+        //       });
+        //     });
+        // }
       }
     });
 
@@ -322,6 +326,7 @@ class GridLayout extends React.Component {
                   distancePerBlock={this.distancePerBlock}
                   db={this.db}
                   initialGridUnitSize={this.initialGridUnitSize}
+                  offset={{ x: this.offset_x, y: this.offset_y }}
                   screen={{
                     x: windowWidth,
                     y: windowHeight,
@@ -407,8 +412,7 @@ class GridLayout extends React.Component {
     const backgroundStyle = backgroundImage
       ? {
           backgroundImage: `url(${backgroundImage})`,
-          width: `${properWidth *
-            this.distancePerBlock *
+          width: `${(settings.board_size_x / this.distancePerBlock) *
             this.initialGridUnitSize}px`
         }
       : {};
@@ -452,6 +456,7 @@ class GridLayout extends React.Component {
             this.entityDraggedOver(e);
           }}
           className="grid-container"
+          ref={c => (this.grid = c)}
         >
           {gridArray}
           {entities}

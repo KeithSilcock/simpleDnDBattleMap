@@ -1,8 +1,27 @@
+.menus-container {
+  display: flex;
+  flex-flow: row;
+  justify-content: space-between;
+  width: 100vw;
+  height: 100vh;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 150;
+  pointer-events: none;
+}
 .menu-container {
   width: 25vw;
+  /* pointer-events: none; */
+}
+.fa-bars,
+.fa-user {
+  pointer-events: auto;
 }
 
-.menu-item {
+.menu-items {
+  background-color: white;
+  height: 100%;
 }
 
 .element-image {
@@ -11,6 +30,17 @@
 
 .upload-file-modal input {
   max-width: 50%;
+}
+
+/**************/
+/* LEFT SIDE */
+/**************/
+
+/**************/
+/* RIGHT SIDE */
+/**************/
+.entity-menu {
+  text-align: right;
 }
 
 /**************/
@@ -57,4 +87,26 @@
 .monster-info {
   display: flex;
   flex-flow: column;
+}
+
+/**************/
+/* ANIMATIONS */
+/**************/
+
+.menu-items {
+  transition: 0.5s;
+}
+
+.left-menu-closed {
+  left: -100%;
+}
+.left-menu-open {
+  left: 0;
+}
+
+.right-menu-closed {
+  left: 100%;
+}
+.right-menu-open {
+  left: 0;
 }

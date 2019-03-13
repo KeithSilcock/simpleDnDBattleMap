@@ -1,5 +1,5 @@
 import React from "react";
-import EntityStatusBar from "./entityStatusBar";
+import EntityStatusBar from "./entity_status_bar";
 import { distanceBetweenTwoPoints } from "../helpers";
 
 import "../assets/css/entity.css";
@@ -19,6 +19,7 @@ class Entity extends React.Component {
     this.lastYPos = 0;
     this.entityLocations = [];
     this.justStartedDragging = false;
+    this.ent_loc = null;
   }
 
   componentDidMount() {
@@ -26,25 +27,27 @@ class Entity extends React.Component {
     this.prevPos = { x: entity.pos_x, y: entity.pos_y };
   }
 
+  componentDidUpdate() {
+    this.ent_loc = this.ent.getBoundingClientRect();
+  }
+
   startDragging(e) {
     const { entityList, entity, selectEntity, entityHash } = this.props;
 
+    console.log("Entity location: ", this.ent_loc);
     this.xStart = e.clientX;
+    console.log("start: ", this.prevPos.x);
     this.yStart = e.clientY;
     this.justStartedDragging = true;
 
     //select the entity
     selectEntity(e, entityHash, true);
 
-    const bounds =
-      e.target.className === "entity"
-        ? e.target.getBoundingClientRect()
-        : e.target.parentElement.getBoundingClientRect();
+    this.xOffset = this.ent_loc.left - e.clientX;
+    this.yOffset = this.ent_loc.bottom - e.clientY - this.props.offset.y;
 
-    this.xOffset =
-      bounds.width / 2 -
-      (e.clientX - bounds.left + this.props.initialGridUnitSize);
-    this.yOffset = bounds.bottom - (e.clientY - window.pageYOffset);
+    this.xStart = e.clientX + this.xOffset;
+    this.yStart = e.clientY + this.yOffset;
 
     for (let uniqueEntityHash in entityList) {
       const entityOnMap = entityList[uniqueEntityHash];
@@ -67,34 +70,43 @@ class Entity extends React.Component {
       entity,
       distancePerBlock
     } = this.props;
-    console.log("clientx: ", e.clientX);
+    // console.log("clientx: ", e.clientX);
 
     if (this.justStartedDragging) {
       var clientX = this.xStart;
       var clientY = this.yStart;
       this.justStartedDragging = false;
     } else {
-      var clientX = e.clientX;
-      var clientY = e.clientY;
+      var clientX = e.clientX + this.xOffset;
+      var clientY = e.clientY + this.yOffset;
     }
     const newXPos =
-      Math.floor((clientX + this.xOffset) / initialGridUnitSize) *
-      distancePerBlock;
+      Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
     const newYPos =
-      Math.floor((clientY + this.yOffset) / initialGridUnitSize) *
-      distancePerBlock;
+      Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
 
     if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
       //check to make sure the position isn't off the map
       if (newXPos <= 0 || newYPos <= 0) {
         return;
       }
-      if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
-        return;
-      }
-      if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
-        return;
-      }
+      // if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
+      //   console.log(
+      //     "new x pos: ",
+      //     newXPos,
+      //     "...prev pos: ",
+      //     this.prevPos.x,
+      //     "... math check",
+      //     Math.abs(newXPos - this.prevPos.x)
+      //   );
+
+      //   return;
+      // }
+      // if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
+      //   console.log("got here 2");
+
+      //   return;
+      // }
 
       //loop through entites on map and verify there aren't any positions that match this one
       for (
@@ -175,7 +187,8 @@ class Entity extends React.Component {
     }
 
     return (
-      <div className={`entity ${entityType}`}>
+      <div className={`entity ${entityType}`} ref={b => (this.ent = b)}>
+        HERE I AM!
         {distanceToSelectedEntity ? (
           <div className="distance container">{`${distanceToSelectedEntity} ft`}</div>
         ) : null}
@@ -183,15 +196,12 @@ class Entity extends React.Component {
           style={style}
           draggable
           onDragStart={e => {
-            e.preventDefault();
             this.startDragging(e);
           }}
           onDrag={e => {
-            e.preventDefault();
             this.dragging(e);
           }}
           onDragEnd={e => {
-            e.preventDefault();
             this.endDrag(e);
             clearSelectedEntity(e);
           }}

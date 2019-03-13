@@ -67,8 +67,6 @@ class Background extends React.Component {
     e.stopPropagation();
     const { background_menu_open } = this.state;
 
-    console.log("setting background window to: ", !background_menu_open);
-
     if (background_menu_open) {
       this.closeBackgroundsTab();
       return;
@@ -141,7 +139,6 @@ class Background extends React.Component {
       },
       () => {
         this.open_popup(modal_html);
-        console.log(file);
       }
     );
   }
@@ -149,15 +146,12 @@ class Background extends React.Component {
   uploadBackground() {
     const { new_file_data } = this.state;
 
-    console.log(new_file_data);
-
     const storage_ref = this.storage.ref(`/terrains/${new_file_data.name}`);
     //upload image
     storage_ref.put(new_file_data.file).then(image_upload_snapshot => {
       //get new url:
       image_upload_snapshot.ref.getDownloadURL().then(downloadURL => {
         //update database
-        console.log("added photo at: ", downloadURL);
         this.db
           .ref("/terrains")
           .push()

@@ -71,8 +71,6 @@ class MonsterMenu extends React.Component {
     e.stopPropagation();
     const { monster_menu_open } = this.state;
 
-    console.log("setting monster window to: ", !monster_menu_open);
-
     if (monster_menu_open) {
       this.closemonstersTab();
       return;
