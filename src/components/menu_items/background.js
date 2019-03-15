@@ -1,5 +1,12 @@
 import React from "react";
-import PopUp from "../pop_up";
+
+import { connect } from "react-redux";
+import {
+  openBackgroundsMenu,
+  closeBackgroundsMenu,
+  openModal,
+  closeModal
+} from "../../actions";
 
 import firebaseApp from "../../firebase";
 
@@ -8,9 +15,8 @@ class Background extends React.Component {
     super(props);
 
     this.state = {
-      background_menu_open: false,
       backgrounds: {},
-      modal_open: false,
+      // modal_open: false,
       modal_data: {
         html: "",
         buttons: ""
@@ -63,44 +69,15 @@ class Background extends React.Component {
     });
   }
 
-  toggleBackgroundTab(e) {
-    e.stopPropagation();
-    const { background_menu_open } = this.state;
+  toggle_backgrounds_menu(e) {
+    const { background_menu_open } = this.props;
 
     if (background_menu_open) {
-      this.closeBackgroundsTab();
-      return;
+      return this.props.closeBackgroundsMenu();
     }
-    this.openBackgroundsTab();
+    this.props.openBackgroundsMenu();
   }
-  openBackgroundsTab() {
-    this.setState({
-      ...this.state,
-      background_menu_open: true
-    });
-  }
-  closeBackgroundsTab() {
-    this.setState({
-      ...this.state,
-      background_menu_open: false
-    });
-  }
-  close_popup(e) {
-    this.setState({
-      ...this.state,
-      modal_open: false
-    });
-  }
-  open_popup(html, buttons) {
-    this.setState({
-      ...this.state,
-      modal_open: true,
-      modal_data: {
-        html,
-        buttons
-      }
-    });
-  }
+
   changeNewBackgroundName(e) {
     const { new_file_data } = this.state;
     const { value } = e.target;
@@ -138,7 +115,11 @@ class Background extends React.Component {
         }
       },
       () => {
-        this.open_popup(modal_html);
+        const data = {
+          html: modal_html,
+          submit: () => this.uploadBackground
+        };
+        this.props.openModal(data);
       }
     );
   }
@@ -171,7 +152,7 @@ class Background extends React.Component {
               },
               () => {
                 this.updateBackgroundList();
-                this.close_popup();
+                this.props.closeModal();
               }
             );
           });
@@ -180,18 +161,8 @@ class Background extends React.Component {
   }
 
   render() {
-    const { background_menu_open, modal_open, modal_data } = this.state;
-
-    const modal_display = modal_open ? (
-      <PopUp
-        close_function={e => this.close_popup(e)}
-        submit_function={() => this.uploadBackground()}
-        html={modal_data.html}
-        buttons={modal_data.buttons}
-      />
-    ) : (
-      ""
-    );
+    // const { modal_open, modal_data } = this.state;
+    const { background_menu_open } = this.props;
 
     const backgrounds_menu = background_menu_open ? (
       <div
@@ -218,15 +189,22 @@ class Background extends React.Component {
       <li
         className="menu-item"
         onClick={e => {
-          this.toggleBackgroundTab(e);
+          this.toggle_backgrounds_menu(e);
         }}
       >
         Background stuff
         {backgrounds_menu}
-        {modal_display}
       </li>
     );
   }
 }
 
-export default Background;
+function mapStateToProps(state) {
+  return {
+    background_menu_open: state.navData.backgrounds_menu_open
+  };
+}
+export default connect(
+  mapStateToProps,
+  { openBackgroundsMenu, closeBackgroundsMenu, openModal, closeModal }
+)(Background);

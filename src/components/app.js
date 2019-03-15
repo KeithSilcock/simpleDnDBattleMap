@@ -1,6 +1,11 @@
 import React from "react";
 import GridLayout from "./grid_layout";
-import Menu from "./menu";
+import LeftMenu from "./menu_left";
+import RightMenu from "./menu_right";
+import PopUp from "./pop_up";
+
+import { connect } from "react-redux";
+import {} from "../actions";
 
 import firebaseApp from "../firebase";
 
@@ -91,6 +96,12 @@ class App extends React.Component {
       highlightedEntity
     } = this.state;
 
+    const modal_display = this.props.modal_open ? (
+      <PopUp data={this.props.modal_content} />
+    ) : (
+      ""
+    );
+
     return (
       <div className="app-container">
         <link
@@ -99,6 +110,7 @@ class App extends React.Component {
           integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
           crossOrigin="anonymous"
         />
+        {modal_display}
         <GridLayout
           settings={settings}
           updateMap={updateMap}
@@ -109,7 +121,18 @@ class App extends React.Component {
           }}
           backgroundURL={activeBackground}
         />
-        <Menu
+        <LeftMenu
+          settings={settings}
+          setBackground={url => this.setBackground(url)}
+          mapNeedsToUpdate={e => {
+            this.mapNeedsToUpdate();
+          }}
+          setHighlightedEntity={e => {
+            this.setHighlightedEntity(e);
+          }}
+          highlightedEntity
+        />
+        <RightMenu
           settings={settings}
           setBackground={url => this.setBackground(url)}
           mapNeedsToUpdate={e => {
@@ -125,4 +148,13 @@ class App extends React.Component {
   }
 }
 
-export default App;
+function mapStateToProps(state) {
+  return {
+    modal_open: state.navData.modal_open,
+    modal_content: state.navData.modal_content
+  };
+}
+export default connect(
+  mapStateToProps,
+  {}
+)(App);

@@ -12,6 +12,18 @@
 }
 .menu-container {
   width: 25vw;
+  position: absolute;
+}
+.menu-container.left {
+  top: 0;
+  left: 0;
+  height: 100vh;
+  /* pointer-events: none; */
+}
+.menu-container.right {
+  top: 0;
+  right: 0;
+  height: 100vh;
   /* pointer-events: none; */
 }
 .fa-bars,

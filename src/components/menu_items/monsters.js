@@ -2,6 +2,14 @@ import React from "react";
 import PopUp from "../pop_up";
 import Entity from "../entity";
 
+import { connect } from "react-redux";
+import {
+  openMonstersMenu,
+  closeMonstersMenu,
+  openModal,
+  closeModal
+} from "../../actions";
+
 import firebaseApp from "../../firebase";
 
 class MonsterMenu extends React.Component {
@@ -9,7 +17,6 @@ class MonsterMenu extends React.Component {
     super(props);
 
     this.state = {
-      monster_menu_open: false,
       monsters: {},
       modal_open: false,
       modal_data: {
@@ -69,32 +76,13 @@ class MonsterMenu extends React.Component {
 
   toggleMonsterTab(e) {
     e.stopPropagation();
-    const { monster_menu_open } = this.state;
+    const { monster_menu_open } = this.props;
+    console.log("HIT ME", monster_menu_open);
 
     if (monster_menu_open) {
-      this.closemonstersTab();
-      return;
+      return this.props.closeMonstersMenu();
     }
-    this.openmonstersTab();
-  }
-  openmonstersTab() {
-    this.setState({
-      ...this.state,
-      monster_menu_open: true
-    });
-  }
-  closemonstersTab() {
-    this.setState({
-      ...this.state,
-      monster_menu_open: false
-    });
-  }
-
-  close_popup(e) {
-    this.setState({
-      ...this.state,
-      modal_open: false
-    });
+    this.props.openMonstersMenu();
   }
 
   setMonsterImage(e) {
@@ -109,7 +97,7 @@ class MonsterMenu extends React.Component {
     });
   }
 
-  open_popup() {
+  openModal() {
     const { new_monster_data } = this.state;
     const { name, desc, size, speed, total_hp } = new_monster_data;
 
@@ -177,12 +165,9 @@ class MonsterMenu extends React.Component {
       </div>
     );
 
-    this.setState({
-      ...this.state,
-      modal_open: true,
-      modal_data: {
-        html: modal_html
-      }
+    this.props.openModal({
+      html: modal_html,
+      submit: () => this.confirmUpload
     });
   }
   changeNewMonsterStats(e) {
@@ -215,7 +200,7 @@ class MonsterMenu extends React.Component {
           },
           () => {
             this.updateMonsterList();
-            this.close_popup();
+            this.props.closeModal();
           }
         );
       });
@@ -239,25 +224,14 @@ class MonsterMenu extends React.Component {
   }
 
   render() {
-    const { monster_menu_open, modal_open, modal_data } = this.state;
-
-    const modal_display = modal_open ? (
-      <PopUp
-        close_function={e => this.close_popup(e)}
-        submit_function={() => this.confirmUpload()}
-        html={modal_data.html}
-        buttons={modal_data.buttons}
-      />
-    ) : (
-      ""
-    );
+    const { monster_menu_open } = this.props;
 
     const monsters_menu = monster_menu_open ? (
       <div
         onClick={e => e.stopPropagation()}
         className="monsters-list-container"
       >
-        <button className="new-monster" onClick={e => this.open_popup()}>
+        <button className="new-monster" onClick={e => this.openModal(e)}>
           New Monster
         </button>
         <ul className="monsters-list">{this.createMonstersList()}</ul>
@@ -275,10 +249,17 @@ class MonsterMenu extends React.Component {
       >
         Monsters
         {monsters_menu}
-        {modal_display}
       </li>
     );
   }
 }
 
-export default MonsterMenu;
+function mapStateToProps(state) {
+  return {
+    monster_menu_open: state.navData.monsters_menu_open
+  };
+}
+export default connect(
+  mapStateToProps,
+  { openMonstersMenu, closeMonstersMenu, openModal, closeModal }
+)(MonsterMenu);
