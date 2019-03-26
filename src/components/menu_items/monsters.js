@@ -77,7 +77,6 @@ class MonsterMenu extends React.Component {
   toggleMonsterTab(e) {
     e.stopPropagation();
     const { monster_menu_open } = this.props;
-    console.log("HIT ME", monster_menu_open);
 
     if (monster_menu_open) {
       return this.props.closeMonstersMenu();
@@ -167,7 +166,7 @@ class MonsterMenu extends React.Component {
 
     this.props.openModal({
       html: modal_html,
-      submit: () => this.confirmUpload
+      submit: e => this.confirmUpload(e)
     });
   }
   changeNewMonsterStats(e) {
@@ -185,6 +184,7 @@ class MonsterMenu extends React.Component {
 
   confirmUpload(e) {
     const { new_monster_data } = this.state;
+    console.log("Entered confirm upload", new_monster_data);
 
     const storage_ref = this.storage.ref(`/monsters/${new_monster_data.name}`);
     //upload image

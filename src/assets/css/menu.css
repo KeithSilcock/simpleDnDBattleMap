@@ -18,13 +18,13 @@
   top: 0;
   left: 0;
   height: 100vh;
-  /* pointer-events: none; */
+  pointer-events: none;
 }
 .menu-container.right {
   top: 0;
   right: 0;
   height: 100vh;
-  /* pointer-events: none; */
+  pointer-events: none;
 }
 .fa-bars,
 .fa-user {

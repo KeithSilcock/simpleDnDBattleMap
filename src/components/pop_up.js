@@ -7,14 +7,20 @@ import "../assets/css/modal.css";
 
 class PopUp extends React.Component {
   render() {
-    console.log(this.props);
     const { html, submit, buttons } = this.props.data;
+    console.log("submit", submit);
 
     const display_buttons = buttons ? (
       buttons
     ) : (
       <div className="modal_buttons">
-        <button onClick={e => submit(e)}>Submit</button>
+        <button
+          onClick={e => {
+            submit(e);
+          }}
+        >
+          Submit
+        </button>
         <button onClick={e => this.props.closeModal(e)}>Close</button>
       </div>
     );

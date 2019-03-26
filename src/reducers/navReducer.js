@@ -14,7 +14,9 @@ export default function(state = DEFAULT_STATE, action) {
     case types.TOGGLE_LEFT_NAV:
       return {
         ...state,
-        left_nav_open: !state.left_nav_open
+        left_nav_open: !state.left_nav_open,
+        backgrounds_menu_open: false,
+        monsters_menu_open: false
       };
 
     case types.TOGGLE_RIGHT_NAV:
