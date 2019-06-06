@@ -35,6 +35,8 @@ class Entity extends React.Component {
   startDragging(e) {
     const { entityList, entity, selectEntity, entityHash } = this.props;
 
+    selectEntity(e, entityHash, true);
+
     // console.log("Entity location: ", this.ent_loc);
     // this.xStart = e.clientX;
     // console.log("start: ", this.prevPos.x);
@@ -63,14 +65,7 @@ class Entity extends React.Component {
 
   dragging(e) {
     if (this.dragCount > 3) {
-      const {
-        screen,
-        initialGridUnitSize,
-        db,
-        entityHash,
-        entity,
-        distancePerBlock
-      } = this.props;
+      const { screen, initialGridUnitSize, db, entityHash, entity, distancePerBlock } = this.props;
 
       // if (this.justStartedDragging) {
       //   var clientX = this.xStart;
@@ -80,10 +75,8 @@ class Entity extends React.Component {
       var clientX = e.clientX + this.xOffset + window.scrollX;
       var clientY = e.clientY + this.yOffset + window.scrollY;
       // }
-      const newXPos =
-        Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
-      const newYPos =
-        Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
+      const newXPos = Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
+      const newYPos = Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
 
       if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
         //check to make sure the position isn't off the map
@@ -109,11 +102,7 @@ class Entity extends React.Component {
         // }
 
         //loop through entites on map and verify there aren't any positions that match this one
-        for (
-          let entLocIndex = 0;
-          entLocIndex < this.entityLocations.length;
-          entLocIndex++
-        ) {
+        for (let entLocIndex = 0; entLocIndex < this.entityLocations.length; entLocIndex++) {
           const entLoc = this.entityLocations[entLocIndex];
           if (entLoc.x === newXPos && entLoc.y === newYPos) {
             // dont let the character move to that spot
@@ -146,15 +135,7 @@ class Entity extends React.Component {
   }
 
   render() {
-    const {
-      entity,
-      baseEntity,
-      selectedEntityHash,
-      clearSelectedEntity,
-      entityHash,
-      entityList,
-      currentScale
-    } = this.props;
+    const { entity, baseEntity, selectedEntityHash, clearSelectedEntity, entityHash, entityList, currentScale } = this.props;
 
     const entityType = entity.is_player ? "player" : "monster";
     const removeWhiteBackground = entity.is_player
@@ -163,8 +144,7 @@ class Entity extends React.Component {
           mixBlendMode: "multiply"
         };
 
-    const selectedStyle =
-      selectedEntityHash === entityHash ? { zIndex: `5` } : null;
+    const selectedStyle = selectedEntityHash === entityHash ? { zIndex: `5`, opacity: 0.75 } : null;
 
     const selectedEntityEnlargementStyle =
       selectedEntityHash === entityHash
@@ -184,17 +164,14 @@ class Entity extends React.Component {
     let distanceToSelectedEntity = null;
     if (selectedEntityHash && selectedEntityHash !== entityHash) {
       const selectedEntity = entityList[selectedEntityHash];
-      distanceToSelectedEntity = Math.floor(
-        distanceBetweenTwoPoints(selectedEntity, entity)
-      );
+      distanceToSelectedEntity = Math.floor(distanceBetweenTwoPoints(selectedEntity, entity));
     }
+
+    const displayStats = entityHash !== selectedEntityHash ? <EntityStatusBar entity={entity} baseEntity={baseEntity} /> : "";
 
     return (
       <div className={`entity ${entityType}`} ref={b => (this.ent = b)}>
-        HERE I AM!
-        {distanceToSelectedEntity ? (
-          <div className="distance container">{`${distanceToSelectedEntity} ft`}</div>
-        ) : null}
+        {distanceToSelectedEntity ? <div className="distance-container">{`${distanceToSelectedEntity} ft`}</div> : null}
         <img
           style={style}
           draggable
@@ -231,7 +208,7 @@ class Entity extends React.Component {
             clearSelectedEntity(e);
           }}
         >
-          <EntityStatusBar entity={entity} baseEntity={baseEntity} />
+          {displayStats}
         </div>
         <div style={selectedStyle} className="base" />
       </div>
