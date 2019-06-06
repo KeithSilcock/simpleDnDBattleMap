@@ -1,6 +1,11 @@
 import React from "react";
-import GridLayout from "./gridLayout";
-import Menu from "./menu";
+import GridLayout from "./grid_layout";
+import LeftMenu from "./menu_left";
+import RightMenu from "./menu_right";
+import PopUp from "./pop_up";
+
+import { connect } from "react-redux";
+import {} from "../actions";
 
 import firebaseApp from "../firebase";
 
@@ -13,7 +18,8 @@ class App extends React.Component {
     this.state = {
       settings: { board_size_x: 100, board_size_y: 100, current_board: null },
       activeBackground: "",
-      updateMap: false
+      updateMap: false,
+      highlightedEntity: null
     };
 
     this.db = firebaseApp.database();
@@ -28,7 +34,6 @@ class App extends React.Component {
     const { settings } = this.state;
     this.db.ref(`settings`).on("value", snapshot => {
       const initial_settings = snapshot.val();
-      console.log("settings snapshot", initial_settings);
 
       this.setState(
         {
@@ -76,8 +81,26 @@ class App extends React.Component {
     });
   }
 
+  setHighlightedEntity(entity) {
+    this.setState({
+      ...this.state,
+      highlightedEntity: entity
+    });
+  }
+
   render() {
-    const { activeBackground, settings, updateMap } = this.state;
+    const {
+      activeBackground,
+      settings,
+      updateMap,
+      highlightedEntity
+    } = this.state;
+
+    const modal_display = this.props.modal_open ? (
+      <PopUp data={this.props.modal_content} />
+    ) : (
+      ""
+    );
 
     return (
       <div className="app-container">
@@ -87,17 +110,37 @@ class App extends React.Component {
           integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/"
           crossOrigin="anonymous"
         />
-        <Menu
+        {modal_display}
+        <LeftMenu
           settings={settings}
           setBackground={url => this.setBackground(url)}
           mapNeedsToUpdate={e => {
             this.mapNeedsToUpdate();
           }}
+          setHighlightedEntity={e => {
+            this.setHighlightedEntity(e);
+          }}
+          highlightedEntity
+        />
+        <RightMenu
+          settings={settings}
+          setBackground={url => this.setBackground(url)}
+          mapNeedsToUpdate={e => {
+            this.mapNeedsToUpdate();
+          }}
+          setHighlightedEntity={e => {
+            this.setHighlightedEntity(e);
+          }}
+          highlightedEntity
         />
         <GridLayout
           settings={settings}
           updateMap={updateMap}
           mapUpdated={e => this.mapUpdated()}
+          highlightedEntity
+          setHighlightedEntity={e => {
+            this.setHighlightedEntity(e);
+          }}
           backgroundURL={activeBackground}
         />
       </div>
@@ -105,4 +148,13 @@ class App extends React.Component {
   }
 }
 
-export default App;
+function mapStateToProps(state) {
+  return {
+    modal_open: state.navData.modal_open,
+    modal_content: state.navData.modal_content
+  };
+}
+export default connect(
+  mapStateToProps,
+  {}
+)(App);

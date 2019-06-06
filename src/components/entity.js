@@ -1,5 +1,5 @@
 import React from "react";
-import EntityStatusBar from "./entityStatusBar";
+import EntityStatusBar from "./entity_status_bar";
 import { distanceBetweenTwoPoints } from "../helpers";
 
 import "../assets/css/entity.css";
@@ -19,6 +19,8 @@ class Entity extends React.Component {
     this.lastYPos = 0;
     this.entityLocations = [];
     this.justStartedDragging = false;
+    this.dragCount = 0;
+    this.ent_loc = null;
   }
 
   componentDidMount() {
@@ -26,25 +28,26 @@ class Entity extends React.Component {
     this.prevPos = { x: entity.pos_x, y: entity.pos_y };
   }
 
+  componentDidUpdate() {
+    this.ent_loc = this.ent.getBoundingClientRect();
+  }
+
   startDragging(e) {
     const { entityList, entity, selectEntity, entityHash } = this.props;
 
-    this.xStart = e.clientX;
-    this.yStart = e.clientY;
-    this.justStartedDragging = true;
+    // console.log("Entity location: ", this.ent_loc);
+    // this.xStart = e.clientX;
+    // console.log("start: ", this.prevPos.x);
+    // this.yStart = e.clientY;
+    // this.justStartedDragging = true;
 
     //select the entity
-    selectEntity(e, entityHash, true);
+    // selectEntity(e, entityHash, true);
+    this.xOffset = this.ent_loc.left - e.clientX - window.innerWidth * 0.1;
+    this.yOffset = this.ent_loc.bottom - e.clientY - this.props.offset.y;
 
-    const bounds =
-      e.target.className === "entity"
-        ? e.target.getBoundingClientRect()
-        : e.target.parentElement.getBoundingClientRect();
-
-    this.xOffset =
-      bounds.width / 2 -
-      (e.clientX - bounds.left + this.props.initialGridUnitSize);
-    this.yOffset = bounds.bottom - (e.clientY - window.pageYOffset);
+    // this.xStart = e.clientX + this.xOffset + window.scrollX;
+    // this.yStart = e.clientY + this.yOffset + window.scrollY;
 
     for (let uniqueEntityHash in entityList) {
       const entityOnMap = entityList[uniqueEntityHash];
@@ -59,75 +62,87 @@ class Entity extends React.Component {
   }
 
   dragging(e) {
-    const {
-      screen,
-      initialGridUnitSize,
-      db,
-      entityHash,
-      entity,
-      distancePerBlock
-    } = this.props;
-    console.log("clientx: ", e.clientX);
+    if (this.dragCount > 3) {
+      const {
+        screen,
+        initialGridUnitSize,
+        db,
+        entityHash,
+        entity,
+        distancePerBlock
+      } = this.props;
 
-    if (this.justStartedDragging) {
-      var clientX = this.xStart;
-      var clientY = this.yStart;
-      this.justStartedDragging = false;
-    } else {
-      var clientX = e.clientX;
-      var clientY = e.clientY;
-    }
-    const newXPos =
-      Math.floor((clientX + this.xOffset) / initialGridUnitSize) *
-      distancePerBlock;
-    const newYPos =
-      Math.floor((clientY + this.yOffset) / initialGridUnitSize) *
-      distancePerBlock;
+      // if (this.justStartedDragging) {
+      //   var clientX = this.xStart;
+      //   var clientY = this.yStart;
+      //   this.justStartedDragging = false;
+      // } else {
+      var clientX = e.clientX + this.xOffset + window.scrollX;
+      var clientY = e.clientY + this.yOffset + window.scrollY;
+      // }
+      const newXPos =
+        Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
+      const newYPos =
+        Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
 
-    if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
-      //check to make sure the position isn't off the map
-      if (newXPos <= 0 || newYPos <= 0) {
-        return;
-      }
-      if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
-        return;
-      }
-      if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
-        return;
-      }
-
-      //loop through entites on map and verify there aren't any positions that match this one
-      for (
-        let entLocIndex = 0;
-        entLocIndex < this.entityLocations.length;
-        entLocIndex++
-      ) {
-        const entLoc = this.entityLocations[entLocIndex];
-        if (entLoc.x === newXPos && entLoc.y === newYPos) {
-          // dont let the character move to that spot
+      if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
+        //check to make sure the position isn't off the map
+        if (newXPos <= 0 || newYPos <= 0) {
           return;
         }
-      }
-      this.nextPrevPos = {
-        x: this.prevPos.x,
-        y: this.prevPos.y
-      };
-      this.prevPos = {
-        x: newXPos,
-        y: newYPos
-      };
+        // if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
+        //   console.log(
+        //     "new x pos: ",
+        //     newXPos,
+        //     "...prev pos: ",
+        //     this.prevPos.x,
+        //     "... math check",
+        //     Math.abs(newXPos - this.prevPos.x)
+        //   );
 
-      //update entities on map
-      db.ref(`entities_on_map/${entityHash}`).update({
-        ...entity,
-        pos_x: newXPos,
-        pos_y: newYPos
-      });
+        //   return;
+        // }
+        // if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
+        //   console.log("got here 2");
+
+        //   return;
+        // }
+
+        //loop through entites on map and verify there aren't any positions that match this one
+        for (
+          let entLocIndex = 0;
+          entLocIndex < this.entityLocations.length;
+          entLocIndex++
+        ) {
+          const entLoc = this.entityLocations[entLocIndex];
+          if (entLoc.x === newXPos && entLoc.y === newYPos) {
+            // dont let the character move to that spot
+            return;
+          }
+        }
+        this.nextPrevPos = {
+          x: this.prevPos.x,
+          y: this.prevPos.y
+        };
+        this.prevPos = {
+          x: newXPos,
+          y: newYPos
+        };
+
+        //update entities on map
+        db.ref(`entities_on_map/${entityHash}`).update({
+          ...entity,
+          pos_x: newXPos,
+          pos_y: newYPos
+        });
+      }
     }
+    this.dragCount += 1;
   }
 
   endDrag(e) {
     this.entityLocations = [];
+    this.dragCount = 0;
   }
 
   render() {
@@ -175,23 +190,22 @@ class Entity extends React.Component {
     }
 
     return (
-      <div className={`entity ${entityType}`}>
+      <div className={`entity ${entityType}`} ref={b => (this.ent = b)}>
+        HERE I AM!
         {distanceToSelectedEntity ? (
           <div className="distance container">{`${distanceToSelectedEntity} ft`}</div>
         ) : null}
         <img
           style={style}
           draggable
+          onMouseDown={e => console.log("Clicked img!")}
           onDragStart={e => {
-            e.preventDefault();
             this.startDragging(e);
           }}
           onDrag={e => {
-            e.preventDefault();
             this.dragging(e);
           }}
           onDragEnd={e => {
-            e.preventDefault();
             this.endDrag(e);
             clearSelectedEntity(e);
           }}
@@ -203,6 +217,9 @@ class Entity extends React.Component {
           style={selectedStyle}
           className="holder"
           draggable
+          onMouseDown={e => {
+            console.log("Clicked: ", e.clientX);
+          }}
           onDragStart={e => {
             this.startDragging(e);
           }}
