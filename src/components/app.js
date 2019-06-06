@@ -111,16 +111,6 @@ class App extends React.Component {
           crossOrigin="anonymous"
         />
         {modal_display}
-        <GridLayout
-          settings={settings}
-          updateMap={updateMap}
-          mapUpdated={e => this.mapUpdated()}
-          highlightedEntity
-          setHighlightedEntity={e => {
-            this.setHighlightedEntity(e);
-          }}
-          backgroundURL={activeBackground}
-        />
         <LeftMenu
           settings={settings}
           setBackground={url => this.setBackground(url)}
@@ -142,6 +132,16 @@ class App extends React.Component {
             this.setHighlightedEntity(e);
           }}
           highlightedEntity
+        />
+        <GridLayout
+          settings={settings}
+          updateMap={updateMap}
+          mapUpdated={e => this.mapUpdated()}
+          highlightedEntity
+          setHighlightedEntity={e => {
+            this.setHighlightedEntity(e);
+          }}
+          backgroundURL={activeBackground}
         />
       </div>
     );

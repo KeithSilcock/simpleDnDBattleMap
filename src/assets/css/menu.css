@@ -7,11 +7,11 @@
   position: absolute;
   top: 0;
   left: 0;
-  z-index: 150;
   pointer-events: none;
 }
 .menu-container {
   width: 25vw;
+  z-index: 5;
   position: absolute;
 }
 .menu-container.left {
@@ -32,8 +32,9 @@
 }
 
 .menu-items {
-  background-color: white;
+  background-color: red;
   height: 100%;
+  pointer-events: auto;
 }
 
 .element-image {
