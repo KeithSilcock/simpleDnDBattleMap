@@ -18,7 +18,7 @@ class GridLayout extends React.Component {
       entityList: null,
       selectedEntityHash: null,
       selectedEntityLoc: {},
-      backgroundImage: null
+      backgroundImage: null,
     };
 
     this.initialGridUnitSize = 50;
@@ -39,7 +39,7 @@ class GridLayout extends React.Component {
     if (backgroundURL !== newbackgroundURL) {
       this.setState({
         ...this.state,
-        backgroundImage: newbackgroundURL
+        backgroundImage: newbackgroundURL,
       });
     }
 
@@ -53,28 +53,26 @@ class GridLayout extends React.Component {
     this.setState({
       ...this.state,
       windowWidth: window.innerWidth,
-      windowHeight: window.innerHeight
+      windowHeight: window.innerHeight,
     });
 
-    this.offset_x = this.grid.getBoundingClientRect().left;
-    this.offset_y = this.grid.getBoundingClientRect().top;
+    const grid_container_offset_x = parseInt(window.getComputedStyle(this.grid.parentElement).marginLeft, 10);
+    const grid_offset_x = parseInt(window.getComputedStyle(this.grid).marginLeft, 10);
+    this.offset_x = grid_container_offset_x - grid_offset_x / 2;
+    this.offset_y = this.grid.getBoundingClientRect().top / 2;
 
     //pulling initial data for reference
     const BASE_PATH = `/`;
-    this.baseRef = this.db.ref(BASE_PATH).once("value", snapshot => {
+    this.baseRef = this.db.ref(BASE_PATH).once("value", (snapshot) => {
       const data = snapshot.val();
 
       this.setState({
         ...this.state,
-        data
+        data,
       });
 
       //entity images
-      for (
-        let entityIndex = 0;
-        entityIndex < Object.keys(data.entities_on_map).length;
-        entityIndex++
-      ) {
+      for (let entityIndex = 0; entityIndex < Object.keys(data.entities_on_map).length; entityIndex++) {
         const entityHash = Object.keys(data.entities_on_map)[entityIndex];
         const entity = data.entities_on_map[entityHash];
 
@@ -112,37 +110,31 @@ class GridLayout extends React.Component {
 
     //setting firebase to update entities on change
     const ENTITY_PATH = "/entities_on_map";
-    this.entRef = this.db.ref(ENTITY_PATH).on("value", snapshot => {
+    this.entRef = this.db.ref(ENTITY_PATH).on("value", (snapshot) => {
       const entityList = snapshot.val();
       this.setState({
         ...this.state,
-        entityList
+        entityList,
       });
     });
   }
 
   getSetEntities() {
-    this.db.ref("entities_on_map").once("value", snapshot => {
+    this.db.ref("entities_on_map").once("value", (snapshot) => {
       const entities = snapshot.val();
 
-      for (
-        let entityIndex = 0;
-        entityIndex < Object.keys(entities).length;
-        entityIndex++
-      ) {
+      for (let entityIndex = 0; entityIndex < Object.keys(entities).length; entityIndex++) {
         const entityHash = Object.keys(data.entities_on_map)[entityIndex];
         const entity = data.entities_on_map[entityHash];
 
         if (entity.is_player) {
-          const entityTypePath = `/${entity.base_hash}/${
-            data.players[entity.base_hash].char_name
-          }.png`;
+          const entityTypePath = `/${entity.base_hash}/${data.players[entity.base_hash].char_name}.png`;
 
           const imageURL = this.storage
             .ref(`/players`)
             .child(`${entityTypePath}`)
             .getDownloadURL()
-            .then(url => {
+            .then((url) => {
               const { data } = this.state;
 
               const updatedData = {
@@ -151,14 +143,14 @@ class GridLayout extends React.Component {
                   ...data.players,
                   [entity.base_hash]: {
                     ...data.players[entity.base_hash],
-                    image: url
-                  }
-                }
+                    image: url,
+                  },
+                },
               };
 
               this.setState({
                 ...this.state,
-                data: updatedData
+                data: updatedData,
               });
             });
         }
@@ -180,15 +172,15 @@ class GridLayout extends React.Component {
         selectedEntityHash: entityHash,
         selectedEntityLoc: {
           x: entityList[entityHash].pos_x,
-          y: entityList[entityHash].pos_y
-        }
+          y: entityList[entityHash].pos_y,
+        },
       });
       return;
     }
     this.setState({
       ...this.state,
       selectedEntityHash: null,
-      selectedEntityLoc: {}
+      selectedEntityLoc: {},
     });
   }
 
@@ -196,7 +188,7 @@ class GridLayout extends React.Component {
     this.setState({
       ...this.state,
       selectedEntityHash: null,
-      selectedEntityLoc: {}
+      selectedEntityLoc: {},
     });
   }
 
@@ -212,7 +204,7 @@ class GridLayout extends React.Component {
 
     this.db.ref(`settings/`).update(
       {
-        [name]: value
+        [name]: value,
       },
       () => {}
     );
@@ -226,16 +218,7 @@ class GridLayout extends React.Component {
   // }
 
   render() {
-    const {
-      currentScale,
-      windowHeight,
-      windowWidth,
-      data,
-      entityList,
-      selectedEntityHash,
-      selectedEntityLoc,
-      backgroundImage
-    } = this.state;
+    const { currentScale, windowHeight, windowWidth, data, entityList, selectedEntityHash, selectedEntityLoc, backgroundImage } = this.state;
     const { settings } = this.props;
 
     const properWidth = settings.board_size_x / this.distancePerBlock;
@@ -266,9 +249,7 @@ class GridLayout extends React.Component {
       entityList && data
         ? Object.keys(entityList).map((entityHash, index) => {
             const entity = entityList[entityHash];
-            const entityType = entity.is_player
-              ? "players"
-              : "monster_list_base";
+            const entityType = entity.is_player ? "players" : "monster_list_base";
 
             const baseEntity = data[entityType][entity.base_hash];
             const posX = (entity.pos_x / this.distancePerBlock) * currentScale;
@@ -276,17 +257,14 @@ class GridLayout extends React.Component {
 
             const mapPlacement = {
               gridColumn: `${posX}`,
-              gridRow: `${posY}`
+              gridRow: `${posY}`,
             };
 
             const style = Object.assign({}, mapPlacement);
 
             //determine distance entity can move on selected
             if (selectedEntityHash === entityHash) {
-              const diameterOfSpeed =
-                (baseEntity.speed / this.distancePerBlock) *
-                this.initialGridUnitSize *
-                currentScale;
+              const diameterOfSpeed = (baseEntity.speed / this.distancePerBlock) * this.initialGridUnitSize * currentScale;
 
               selectedEntityMovement = (
                 <MovementIndicator
@@ -306,7 +284,7 @@ class GridLayout extends React.Component {
                 // onClick={e => {
                 //   this.entitySelected(e, entityHash);
                 // }}
-                onMouseDown={e => {
+                onMouseDown={(e) => {
                   this.entitySelected(e, entityHash);
                 }}
                 className="tile entity-tile"
@@ -331,7 +309,7 @@ class GridLayout extends React.Component {
                     x: windowWidth,
                     y: windowHeight,
                     xMargin,
-                    yMargin
+                    yMargin,
                   }}
                   entity={entity}
                   baseEntity={baseEntity}
@@ -347,22 +325,14 @@ class GridLayout extends React.Component {
     for (let rowIndex = 1; rowIndex <= properHeight; rowIndex++) {
       for (let columnIndex = 1; columnIndex <= properWidth; columnIndex++) {
         //set edge case styles
-        const lastRowStyle =
-          rowIndex === properHeight ? { borderBottom: "1px solid grey" } : {};
-        const lastColStyle =
-          columnIndex === properWidth ? { borderRight: "1px solid grey" } : {};
+        const lastRowStyle = rowIndex === properHeight ? { borderBottom: "1px solid grey" } : {};
+        const lastColStyle = columnIndex === properWidth ? { borderRight: "1px solid grey" } : {};
 
         const style = Object.assign({}, lastRowStyle, lastColStyle);
 
         //add each item
         gridArray.push(
-          <div
-            style={style}
-            key={`${columnIndex} ${rowIndex}`}
-            className={`tile`}
-            col={columnIndex}
-            row={rowIndex}
-          >
+          <div style={style} key={`${columnIndex} ${rowIndex}`} className={`tile`} col={columnIndex} row={rowIndex}>
             {/* {`(${columnIndex * 5}, ${rowIndex * 5})`} */}
           </div>
         );
@@ -383,18 +353,10 @@ class GridLayout extends React.Component {
         return 0;
       });
 
-      for (
-        let entityIndex = 0;
-        entityIndex < sortedEntities.length;
-        entityIndex++
-      ) {
+      for (let entityIndex = 0; entityIndex < sortedEntities.length; entityIndex++) {
         const entity = sortedEntities[entityIndex];
 
-        const entity_pos =
-          properWidth * (entity.props.row - 1) +
-          entity.props.col -
-          entityIndex -
-          1;
+        const entity_pos = properWidth * (entity.props.row - 1) + entity.props.col - entityIndex - 1;
 
         const removedEmptyDiv = gridArray.splice(entity_pos, 1);
         // const removedEmptyDiv = gridArray.splice(entity_pos, 1, entity);
@@ -402,18 +364,15 @@ class GridLayout extends React.Component {
     }
 
     const gridContainerLayout = {
-      gridTemplateColumns: `repeat(${properWidth}, ${this.initialGridUnitSize *
-        currentScale}px)`,
-      gridTemplateRows: `repeat(${properHeight}, ${this.initialGridUnitSize *
-        currentScale}px)`,
-      margin: `${yMargin}px ${xMargin}px`
+      gridTemplateColumns: `repeat(${properWidth}, ${this.initialGridUnitSize * currentScale}px)`,
+      gridTemplateRows: `repeat(${properHeight}, ${this.initialGridUnitSize * currentScale}px)`,
+      margin: `${yMargin}px ${xMargin}px`,
     };
 
     const backgroundStyle = backgroundImage
       ? {
           backgroundImage: `url(${backgroundImage})`,
-          width: `${(settings.board_size_x / this.distancePerBlock) *
-            this.initialGridUnitSize}px`
+          width: `${(settings.board_size_x / this.distancePerBlock) * this.initialGridUnitSize}px`,
         }
       : {};
 
@@ -429,7 +388,7 @@ class GridLayout extends React.Component {
               type="number"
               name="board_size_x"
               value={board_size_x}
-              onChange={e => {
+              onChange={(e) => {
                 this.settingsChange(e);
               }}
             />
@@ -441,22 +400,22 @@ class GridLayout extends React.Component {
               type="number"
               name="board_size_y"
               value={board_size_y}
-              onChange={e => {
+              onChange={(e) => {
                 this.settingsChange(e);
               }}
             />
           </div>
         </div>
         <div
-          onClick={e => {
+          onClick={(e) => {
             this.clickedMap(e);
           }}
           style={gridStyle}
-          onDragOver={e => {
+          onDragOver={(e) => {
             this.entityDraggedOver(e);
           }}
           className="grid-container"
-          ref={c => (this.grid = c)}
+          ref={(c) => (this.grid = c)}
         >
           {gridArray}
           {entities}

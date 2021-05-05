@@ -26,6 +26,8 @@ class Entity extends React.Component {
   componentDidMount() {
     const { entity } = this.props;
     this.prevPos = { x: entity.pos_x, y: entity.pos_y };
+    this.dragImg = new Image(0, 0);
+    this.dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
   }
 
   componentDidUpdate() {
@@ -37,6 +39,9 @@ class Entity extends React.Component {
 
     selectEntity(e, entityHash, true);
 
+    // remove ghost image on drag
+    e.dataTransfer.setDragImage(this.dragImg, 0, 0);
+
     // console.log("Entity location: ", this.ent_loc);
     // this.xStart = e.clientX;
     // console.log("start: ", this.prevPos.x);
@@ -45,8 +50,8 @@ class Entity extends React.Component {
 
     //select the entity
     // selectEntity(e, entityHash, true);
-    this.xOffset = this.ent_loc.left - e.clientX - window.innerWidth * 0.1;
-    this.yOffset = this.ent_loc.bottom - e.clientY - this.props.offset.y;
+    this.xOffset = -this.props.offset.x;
+    this.yOffset = -this.props.offset.y;
 
     // this.xStart = e.clientX + this.xOffset + window.scrollX;
     // this.yStart = e.clientY + this.yOffset + window.scrollY;
@@ -57,7 +62,7 @@ class Entity extends React.Component {
       if (uniqueEntityHash !== entityHash) {
         this.entityLocations.push({
           x: entityOnMap.pos_x,
-          y: entityOnMap.pos_y
+          y: entityOnMap.pos_y,
         });
       }
     }
@@ -74,6 +79,7 @@ class Entity extends React.Component {
       // } else {
       var clientX = e.clientX + this.xOffset + window.scrollX;
       var clientY = e.clientY + this.yOffset + window.scrollY;
+
       // }
       const newXPos = Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
       const newYPos = Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
@@ -102,27 +108,30 @@ class Entity extends React.Component {
         // }
 
         //loop through entites on map and verify there aren't any positions that match this one
+        // also check, if there are some nearby others, their images need to be fixed.
         for (let entLocIndex = 0; entLocIndex < this.entityLocations.length; entLocIndex++) {
           const entLoc = this.entityLocations[entLocIndex];
           if (entLoc.x === newXPos && entLoc.y === newYPos) {
             // dont let the character move to that spot
             return;
+          } else if (newXPos - entLoc.x === distancePerBlock && newYPos - entLoc.y === distancePerBlock) {
+            console.log("NEAR OTHER ENTITY");
           }
         }
         this.nextPrevPos = {
           x: this.prevPos.x,
-          y: this.prevPos.y
+          y: this.prevPos.y,
         };
         this.prevPos = {
           x: newXPos,
-          y: newYPos
+          y: newYPos,
         };
 
         //update entities on map
         db.ref(`entities_on_map/${entityHash}`).update({
           ...entity,
           pos_x: newXPos,
-          pos_y: newYPos
+          pos_y: newYPos,
         });
       }
     }
@@ -141,7 +150,7 @@ class Entity extends React.Component {
     const removeWhiteBackground = entity.is_player
       ? {}
       : {
-          mixBlendMode: "multiply"
+          mixBlendMode: "multiply",
         };
 
     const selectedStyle = selectedEntityHash === entityHash ? { zIndex: `5`, opacity: 0.75 } : null;
@@ -150,7 +159,7 @@ class Entity extends React.Component {
       selectedEntityHash === entityHash
         ? {
             width: `${200 * currentScale}px`,
-            transform: "translate(-25%)"
+            transform: "translate(-25%)",
           }
         : {};
 
@@ -170,19 +179,19 @@ class Entity extends React.Component {
     const displayStats = entityHash !== selectedEntityHash ? <EntityStatusBar entity={entity} baseEntity={baseEntity} /> : "";
 
     return (
-      <div className={`entity ${entityType}`} ref={b => (this.ent = b)}>
+      <div className={`entity ${entityType}`} ref={(b) => (this.ent = b)}>
         {distanceToSelectedEntity ? <div className="distance-container">{`${distanceToSelectedEntity} ft`}</div> : null}
         <img
           style={style}
           draggable
-          onMouseDown={e => console.log("Clicked img!")}
-          onDragStart={e => {
+          onMouseDown={(e) => console.log("Clicked img!")}
+          onDragStart={(e) => {
             this.startDragging(e);
           }}
-          onDrag={e => {
+          onDrag={(e) => {
             this.dragging(e);
           }}
-          onDragEnd={e => {
+          onDragEnd={(e) => {
             this.endDrag(e);
             clearSelectedEntity(e);
           }}
@@ -194,16 +203,16 @@ class Entity extends React.Component {
           style={selectedStyle}
           className="holder"
           draggable
-          onMouseDown={e => {
+          onMouseDown={(e) => {
             console.log("Clicked: ", e.clientX);
           }}
-          onDragStart={e => {
+          onDragStart={(e) => {
             this.startDragging(e);
           }}
-          onDrag={e => {
+          onDrag={(e) => {
             this.dragging(e);
           }}
-          onDragEnd={e => {
+          onDragEnd={(e) => {
             this.endDrag(e);
             clearSelectedEntity(e);
           }}
