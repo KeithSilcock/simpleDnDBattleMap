@@ -14,3 +14,5 @@
 > 1. Start dev server
 >    - `npm start`
 > 1. Open a browser and navigate to `localhost:3000` You should see a page that displays your battle map
+
+To upload to the server, first run `npm run bundle` then update git and pull from your server
