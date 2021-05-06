@@ -13,8 +13,8 @@ class Entity extends React.Component {
     this.xStart = 0;
     this.yStart = 0;
     this.yOffset = 0;
-    this.prevPos = { x: 0, y: 0 };
-    this.nextPrevPos = { x: 0, y: 0 };
+    this.placedPosition = { x: 0, y: 0 };
+    this.previousPosition = { x: 0, y: 0 };
     this.lastXPos = 0;
     this.lastYPos = 0;
     this.entityLocations = [];
@@ -25,7 +25,7 @@ class Entity extends React.Component {
 
   componentDidMount() {
     const { entity } = this.props;
-    this.prevPos = { x: entity.pos_x, y: entity.pos_y };
+    this.placedPosition = { x: entity.pos_x, y: entity.pos_y };
     this.dragImg = new Image(0, 0);
     this.dragImg.src = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7";
   }
@@ -42,25 +42,15 @@ class Entity extends React.Component {
     // remove ghost image on drag
     e.dataTransfer.setDragImage(this.dragImg, 0, 0);
 
-    // console.log("Entity location: ", this.ent_loc);
-    // this.xStart = e.clientX;
-    // console.log("start: ", this.prevPos.x);
-    // this.yStart = e.clientY;
-    // this.justStartedDragging = true;
-
-    //select the entity
-    // selectEntity(e, entityHash, true);
     this.xOffset = -this.props.offset.x;
     this.yOffset = -this.props.offset.y;
-
-    // this.xStart = e.clientX + this.xOffset + window.scrollX;
-    // this.yStart = e.clientY + this.yOffset + window.scrollY;
 
     for (let uniqueEntityHash in entityList) {
       const entityOnMap = entityList[uniqueEntityHash];
 
       if (uniqueEntityHash !== entityHash) {
         this.entityLocations.push({
+          hash: uniqueEntityHash,
           x: entityOnMap.pos_x,
           y: entityOnMap.pos_y,
         });
@@ -84,45 +74,42 @@ class Entity extends React.Component {
       const newXPos = Math.floor(clientX / initialGridUnitSize) * distancePerBlock;
       const newYPos = Math.floor(clientY / initialGridUnitSize) * distancePerBlock;
 
-      if (newXPos !== this.prevPos.x || newYPos !== this.prevPos.y) {
+      if (newXPos !== this.placedPosition.x || newYPos !== this.placedPosition.y) {
         //check to make sure the position isn't off the map
         if (newXPos <= 0 || newYPos <= 0) {
           return;
         }
-        // if (Math.abs(newXPos - this.prevPos.x) > 3 * distancePerBlock) {
+        // if (Math.abs(newXPos - this.placedPosition.x) > 3 * distancePerBlock) {
         //   console.log(
         //     "new x pos: ",
         //     newXPos,
         //     "...prev pos: ",
-        //     this.prevPos.x,
+        //     this.placedPosition.x,
         //     "... math check",
-        //     Math.abs(newXPos - this.prevPos.x)
+        //     Math.abs(newXPos - this.placedPosition.x)
         //   );
 
         //   return;
         // }
-        // if (Math.abs(newYPos - this.prevPos.Y) > 3 * distancePerBlock) {
+        // if (Math.abs(newYPos - this.placedPosition.Y) > 3 * distancePerBlock) {
         //   console.log("got here 2");
 
         //   return;
         // }
 
         //loop through entites on map and verify there aren't any positions that match this one
-        // also check, if there are some nearby others, their images need to be fixed.
         for (let entLocIndex = 0; entLocIndex < this.entityLocations.length; entLocIndex++) {
           const entLoc = this.entityLocations[entLocIndex];
           if (entLoc.x === newXPos && entLoc.y === newYPos) {
             // dont let the character move to that spot
             return;
-          } else if (newXPos - entLoc.x === distancePerBlock && newYPos - entLoc.y === distancePerBlock) {
-            console.log("NEAR OTHER ENTITY");
           }
         }
-        this.nextPrevPos = {
-          x: this.prevPos.x,
-          y: this.prevPos.y,
+        this.previousPosition = {
+          x: this.placedPosition.x,
+          y: this.placedPosition.y,
         };
-        this.prevPos = {
+        this.placedPosition = {
           x: newXPos,
           y: newYPos,
         };
@@ -144,7 +131,17 @@ class Entity extends React.Component {
   }
 
   render() {
-    const { entity, baseEntity, selectedEntityHash, clearSelectedEntity, entityHash, entityList, currentScale } = this.props;
+    const {
+      entity,
+      baseEntity,
+      selectedEntityHash,
+      clearSelectedEntity,
+      entityHash,
+      entityList,
+      currentScale,
+      image_pos_correction,
+      selectEntity,
+    } = this.props;
 
     const entityType = entity.is_player ? "player" : "monster";
     const removeWhiteBackground = entity.is_player
@@ -153,7 +150,7 @@ class Entity extends React.Component {
           mixBlendMode: "multiply",
         };
 
-    const selectedStyle = selectedEntityHash === entityHash ? { zIndex: `5`, opacity: 0.75 } : null;
+    const selectedStyle = selectedEntityHash === entityHash ? { zIndex: `3`, opacity: 0.75 } : null;
 
     const selectedEntityEnlargementStyle =
       selectedEntityHash === entityHash
@@ -163,12 +160,26 @@ class Entity extends React.Component {
           }
         : {};
 
-    const style = Object.assign(
+    let image_correction_style = {};
+
+    if (image_pos_correction && selectedEntityHash !== entityHash) {
+      if (image_pos_correction["lefting"] != 0) {
+        image_correction_style["left"] = image_pos_correction["lefting"] + "px";
+      }
+      if (image_pos_correction["northing"] != 0) {
+        image_correction_style["top"] = image_pos_correction["northing"] + "px";
+      }
+      debugger;
+    }
+
+    const image_style = Object.assign(
       {},
       // removeWhiteBackground,
       selectedStyle,
-      selectedEntityEnlargementStyle
+      selectedEntityEnlargementStyle,
+      image_correction_style
     );
+    const dToEntityStyle = Object.assign({}, image_correction_style);
 
     let distanceToSelectedEntity = null;
     if (selectedEntityHash && selectedEntityHash !== entityHash) {
@@ -176,15 +187,36 @@ class Entity extends React.Component {
       distanceToSelectedEntity = Math.floor(distanceBetweenTwoPoints(selectedEntity, entity));
     }
 
-    const displayStats = entityHash !== selectedEntityHash ? <EntityStatusBar entity={entity} baseEntity={baseEntity} /> : "";
+    const displayStats = entityHash === selectedEntityHash ? <EntityStatusBar entity={entity} baseEntity={baseEntity} /> : "";
 
     return (
-      <div className={`entity ${entityType}`} ref={(b) => (this.ent = b)}>
-        {distanceToSelectedEntity ? <div className="distance-container">{`${distanceToSelectedEntity} ft`}</div> : null}
-        <img
-          style={style}
+      <div id={`entity-${entityHash}`} className={`entity ${entityType}`} ref={(b) => (this.ent = b)}>
+        {distanceToSelectedEntity ? (
+          <div className="distance-container" style={dToEntityStyle}>
+            {`${distanceToSelectedEntity} ft`}
+          </div>
+        ) : null}
+        <div
+          className="base"
           draggable
-          onMouseDown={(e) => console.log("Clicked img!")}
+          onMouseUp={(e) => selectEntity(e, entityHash, false)}
+          onDragStart={(e) => {
+            this.startDragging(e);
+          }}
+          onDrag={(e) => {
+            this.dragging(e);
+          }}
+          onDragEnd={(e) => {
+            this.endDrag(e);
+            clearSelectedEntity(e);
+          }}
+        />
+        <img
+          id={`entity-image-${entityHash}`}
+          ref={(c) => (this.image = c)}
+          style={image_style}
+          draggable
+          onMouseDown={(e) => selectEntity(e, entityHash, false)}
           onDragStart={(e) => {
             this.startDragging(e);
           }}
@@ -199,27 +231,29 @@ class Entity extends React.Component {
           src={`${baseEntity.image}`}
           alt=""
         />
-        <div
-          style={selectedStyle}
-          className="holder"
-          draggable
-          onMouseDown={(e) => {
-            console.log("Clicked: ", e.clientX);
-          }}
-          onDragStart={(e) => {
-            this.startDragging(e);
-          }}
-          onDrag={(e) => {
-            this.dragging(e);
-          }}
-          onDragEnd={(e) => {
-            this.endDrag(e);
-            clearSelectedEntity(e);
-          }}
-        >
-          {displayStats}
-        </div>
-        <div style={selectedStyle} className="base" />
+        {entityHash === selectedEntityHash ? (
+          <div
+            style={selectedStyle}
+            className="holder"
+            draggable
+            onMouseDown={(e) => {
+              console.log("Clicked: ", e.clientX);
+            }}
+            // onDragStart={(e) => {
+            //   this.startDragging(e);
+            // }}
+            // onDrag={(e) => {
+            //   this.dragging(e);
+            // }}
+            // onDragEnd={(e) => {
+            //   this.endDrag(e);
+            //   clearSelectedEntity(e);
+            // }}
+          >
+            {displayStats}
+            {entityHash}
+          </div>
+        ) : null}
       </div>
     );
   }

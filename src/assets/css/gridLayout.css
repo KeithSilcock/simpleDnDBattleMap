@@ -11,14 +11,45 @@
   background-repeat: no-repeat;
   background-size: contain;
 }
+.vis-grid-container {
+  /* width: auto; */
+  /*height: 100%;*/
+  width: 75vw;
+  display: grid;
+  user-select: none;
+  margin: 5px;
+  position: absolute;
+  top: 57px;
+  left: 35px;
+
+  background-repeat: no-repeat;
+  background-size: contain;
+  pointer-events: none;
+  z-index: 0;
+}
 
 .tile {
-  border-top: 1px solid grey;
-  border-right: 1px solid grey;
+  /* border-top: 1px solid grey;
+  border-right: 1px solid grey; */
   box-sizing: border-box;
 }
+.vis-tile {
+  border-top: 1px solid red;
+  border-right: 1px solid red;
+  box-sizing: border-box;
+}
+.entity-tile {
+  z-index: 1;
+  position: relative;
+  background-size: unset;
+  pointer-events: none;
+}
+
 [col="1"] {
   border-left: 1px solid grey;
+}
+[vis_col="1"] {
+  border-left: 1px solid red;
 }
 
 .dimensions {

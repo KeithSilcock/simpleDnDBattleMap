@@ -2,6 +2,7 @@ import React from "react";
 import firebaseApp from "../firebase";
 import Entity from "./entity";
 import MovementIndicator from "./movement_indicator";
+import Vector from "./vector";
 
 import "../assets/css/gridLayout.css";
 
@@ -19,6 +20,8 @@ class GridLayout extends React.Component {
       selectedEntityHash: null,
       selectedEntityLoc: {},
       backgroundImage: null,
+      entity_image_width: 100,
+      entity_image_height: 100,
     };
 
     this.initialGridUnitSize = 50;
@@ -211,11 +214,40 @@ class GridLayout extends React.Component {
   }
 
   // componentWillUnmount() {
-  //   debugger;
   //   if (this.baseRef) this.baseRef.off();
 
   //   if (this.entRef) this.entRef.off();
   // }
+
+  define_image_position(grid_hash) {
+    var { entityList, entity_image_width, entity_image_height } = this.state;
+    let entity = entityList[grid_hash];
+    let nearby_entities = [];
+
+    for (const [check_grid_hash, check_entity] of Object.entries(entityList)) {
+      if (grid_hash !== check_grid_hash) {
+        const x_distance = entity.pos_x - check_entity.pos_x;
+        const y_distance = entity.pos_y - check_entity.pos_y;
+        if (Math.abs(x_distance) <= this.distancePerBlock && Math.abs(y_distance) <= this.distancePerBlock) {
+          nearby_entities.push(check_grid_hash);
+        }
+      }
+    }
+    if (nearby_entities.length) {
+      let directional_vector = new Vector(0, 0);
+      for (let nearby_entity_hash of nearby_entities) {
+        let nearby_entity = entityList[nearby_entity_hash];
+        let nearby_vector = new Vector(entity.pos_x - nearby_entity.pos_x, entity.pos_y - nearby_entity.pos_y);
+
+        directional_vector = directional_vector.add(nearby_vector);
+      }
+
+      // check which direction they're grouped in
+      let lefting = ((directional_vector.components[0] / Math.abs(directional_vector.components[0])) * entity_image_width) / 2;
+      let northing = ((directional_vector.components[1] / Math.abs(directional_vector.components[1])) * entity_image_height) / 2;
+      return { lefting, northing };
+    }
+  }
 
   render() {
     const { currentScale, windowHeight, windowWidth, data, entityList, selectedEntityHash, selectedEntityLoc, backgroundImage } = this.state;
@@ -228,6 +260,7 @@ class GridLayout extends React.Component {
     //   (windowWidth / this.initialGridUnitSize) * currentScale
     // );
     const xMargin = 15; //Math.round(
+    const visXMargin = 25; //Math.round(
     //   (((windowWidth / this.initialGridUnitSize) * currentScale -
     //     (properWidth - 1)) *
     //     this.initialGridUnitSize) /
@@ -237,14 +270,18 @@ class GridLayout extends React.Component {
     //   (windowHeight / this.initialGridUnitSize) * currentScale
     // );
     const yMargin = 15; // Math.round(
+    const visYMargin = 25; // Math.round(
     //   (((windowHeight / this.initialGridUnitSize) * currentScale -
     //     (properHeight - 1)) *
     //     this.initialGridUnitSize) /
     //     2
     // );
 
+    // trying to move image frames if nearby
+    // this.check_nearby_entities();
+
     //create entity list
-    var selectedEntityMovement = null;
+    let selectedEntityMovement = null;
     const entities =
       entityList && data
         ? Object.keys(entityList).map((entityHash, index) => {
@@ -260,7 +297,11 @@ class GridLayout extends React.Component {
               gridRow: `${posY}`,
             };
 
-            const style = Object.assign({}, mapPlacement);
+            const entity_image_position_correction = this.define_image_position(entityHash);
+
+            const selected_higher_zindex = selectedEntityHash === entityHash ? { zIndex: `3` } : null;
+
+            const tile_style = Object.assign({}, mapPlacement, selected_higher_zindex);
 
             //determine distance entity can move on selected
             if (selectedEntityHash === entityHash) {
@@ -284,11 +325,11 @@ class GridLayout extends React.Component {
                 // onClick={e => {
                 //   this.entitySelected(e, entityHash);
                 // }}
-                onMouseDown={(e) => {
-                  this.entitySelected(e, entityHash);
-                }}
+                // onMouseDown={(e) => {
+                //   this.entitySelected(e, entityHash);
+                // }}
                 className="tile entity-tile"
-                style={style}
+                style={tile_style}
                 col={posX}
                 row={posY}
                 key={index}
@@ -305,6 +346,7 @@ class GridLayout extends React.Component {
                   db={this.db}
                   initialGridUnitSize={this.initialGridUnitSize}
                   offset={{ x: this.offset_x, y: this.offset_y }}
+                  image_pos_correction={entity_image_position_correction}
                   screen={{
                     x: windowWidth,
                     y: windowHeight,
@@ -333,6 +375,23 @@ class GridLayout extends React.Component {
         //add each item
         gridArray.push(
           <div style={style} key={`${columnIndex} ${rowIndex}`} className={`tile`} col={columnIndex} row={rowIndex}>
+            {/* {`(${columnIndex * 5}, ${rowIndex * 5})`} */}
+          </div>
+        );
+      }
+    }
+    const visGridArray = [];
+    for (let rowIndex = 1; rowIndex <= properHeight; rowIndex++) {
+      for (let columnIndex = 1; columnIndex <= properWidth; columnIndex++) {
+        //set edge case styles
+        const lastRowStyle = rowIndex === properHeight ? { borderBottom: "1px solid red" } : {};
+        const lastColStyle = columnIndex === properWidth ? { borderRight: "1px solid red" } : {};
+
+        const style = Object.assign({}, lastRowStyle, lastColStyle);
+
+        //add each item
+        visGridArray.push(
+          <div style={style} key={`${columnIndex} ${rowIndex}`} className={`vis-tile`} vis_col={columnIndex} row={rowIndex}>
             {/* {`(${columnIndex * 5}, ${rowIndex * 5})`} */}
           </div>
         );
@@ -368,6 +427,11 @@ class GridLayout extends React.Component {
       gridTemplateRows: `repeat(${properHeight}, ${this.initialGridUnitSize * currentScale}px)`,
       margin: `${yMargin}px ${xMargin}px`,
     };
+    const visGridContainerLayout = {
+      gridTemplateColumns: `repeat(${properWidth}, ${this.initialGridUnitSize * currentScale}px)`,
+      gridTemplateRows: `repeat(${properHeight}, ${this.initialGridUnitSize * currentScale}px)`,
+      margin: `${visYMargin}px ${visXMargin}px`,
+    };
 
     const backgroundStyle = backgroundImage
       ? {
@@ -377,6 +441,7 @@ class GridLayout extends React.Component {
       : {};
 
     const gridStyle = Object.assign({}, gridContainerLayout, backgroundStyle);
+    const visGridStyle = Object.assign({}, visGridContainerLayout);
     const { board_size_x, board_size_y } = settings;
 
     return (
@@ -420,6 +485,9 @@ class GridLayout extends React.Component {
           {gridArray}
           {entities}
           {selectedEntityMovement}
+        </div>
+        <div style={visGridStyle} className="vis-grid-container" ref={(c) => (this.grid = c)}>
+          {visGridArray}
         </div>
       </div>
     );

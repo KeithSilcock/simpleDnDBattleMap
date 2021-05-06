@@ -1,5 +1,8 @@
 .entity-bar {
 }
+.entity-tile {
+  z-index: 1;
+}
 .holder {
   position: absolute;
   width: 200px;
